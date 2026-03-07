@@ -1,0 +1,1003 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Code Arena — Market Duels</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06060e;--panel:#090914;--line:#1a1a2e;--muted:#556;--gold:#ffd700;--good:#18d26e;--bad:#ff5252}
+body{background:radial-gradient(circle at top,#0b0b18 0%,#06060e 55%,#030309 100%);color:#fff;font-family:'Courier New',monospace;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+#top{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:rgba(0,0,0,.82);border-bottom:1px solid var(--line);z-index:10;backdrop-filter:blur(6px)}
+#top h1{font-size:11px;letter-spacing:5px;color:#7b82b5}
+#cash{color:var(--gold);font-size:15px;font-weight:bold;text-shadow:0 0 10px rgba(255,215,0,.28)}
+.top-stat{font-size:10px;color:#7a7e9d}
+#main{display:flex;flex:1;overflow:hidden}
+#left{width:300px;min-width:300px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65));border-right:1px solid var(--line);overflow-y:auto;padding:0;font-size:10px}
+#arena-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+canvas{border:1px solid var(--line);border-radius:4px;box-shadow:0 0 60px rgba(0,0,0,.45)}
+#right{width:310px;min-width:310px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65));border-left:1px solid var(--line);overflow-y:auto;padding:6px;font-size:10px}
+#bottom{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;background:rgba(0,0,0,.82);border-top:1px solid var(--line);font-size:9px;color:#52607b;z-index:10}
+button{font-family:inherit}
+.panel-title{font-size:10px;letter-spacing:2px;color:#7c85b2;margin-bottom:4px;text-align:center;padding:4px;border-bottom:1px solid #111}
+.market-board,.portfolio-card,.brain-row-panel,.phil-row{margin-bottom:8px;padding:7px;border:1px solid #17172d;border-radius:6px;background:rgba(255,255,255,.018)}
+.market-board .row,.portfolio-card .row,.tx-row,.lb-row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.market-board .row{font-size:9px;color:#93a0d5;margin:2px 0}
+.market-board .meter{height:6px;background:#0b0b14;border-radius:999px;overflow:hidden;border:1px solid #1c1c2f;margin:6px 0}
+.market-board .fill{height:100%;background:linear-gradient(90deg,#ffd700,#ff8c2b);width:0%}
+.market-board .mode-btns{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.market-board button,.trade-step button,#speed-ctrl button,.small-btn{padding:2px 8px;background:rgba(0,0,0,.6);border:1px solid #222;color:#8892bd;font-size:9px;cursor:pointer;border-radius:3px}
+.market-board button.sel,.trade-step button.sel,#speed-ctrl button.sel,.small-btn.sel{border-color:#ffd700;color:#ffd700}
+#accent{color:#ffd76a}
+.chart-wrap{padding:6px;border:1px solid #18182f;border-radius:6px;background:rgba(255,255,255,.015);margin-bottom:8px}
+#portfolioC{width:100%;height:150px;background:#07070f;border-radius:4px}
+.lb-row{padding:4px 2px;border-bottom:1px solid #0a0a14;font-size:10px}
+.lb-row .r{color:#ffd700;font-size:9px;width:18px}
+.lb-meta{color:#7882a9;font-size:8px}
+.phil-name,.brain-name{font-size:10px;font-weight:bold;letter-spacing:1px;margin-bottom:2px}
+.phil-text,.brain-text{font-size:8px;color:#8893c5;font-style:italic;line-height:1.45}
+.phil-traits,.brain-micro{font-size:8px;color:#5c688e;margin-top:3px}
+.tx-row{font-size:9px;padding:3px 0;color:#7180ae;border-bottom:1px solid #08080f}
+.tx-row span:last-child{white-space:nowrap}
+#event-log{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:10;font-size:10px;pointer-events:none;text-align:center;max-width:min(70vw,700px)}
+.ev{animation:evfade 2.9s forwards;opacity:0}
+@keyframes evfade{0%{opacity:0;transform:translateY(8px) scale(.98)}12%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateY(-12px) scale(1.02)}}
+#speed-ctrl{position:absolute;bottom:8px;right:8px;z-index:10;display:flex;gap:4px;font-size:9px;color:#445;align-items:center;background:rgba(0,0,0,.35);padding:4px 6px;border-radius:14px;border:1px solid #17172a}
+#gen-badge{position:absolute;top:8px;right:8px;z-index:10;font-size:10px;color:#6c75a8;letter-spacing:1px;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:12px;border:1px solid #17172a}
+#round-pulse{position:absolute;top:12px;left:12px;z-index:10;font-size:10px;color:#adb7e9;background:rgba(0,0,0,.45);padding:5px 8px;border-radius:12px;border:1px solid #17172a;backdrop-filter:blur(4px)}
+#trade-halt{position:absolute;top:46px;left:12px;z-index:10;font-size:10px;color:#ffd76a;background:rgba(28,18,0,.6);padding:5px 8px;border-radius:12px;border:1px solid rgba(255,215,0,.25);backdrop-filter:blur(4px);display:none}
+#trade-halt.show{display:block}
+#audio-chip{position:absolute;top:78px;left:12px;z-index:10;font-size:9px;color:#9fd0ff;background:rgba(0,0,0,.45);padding:5px 8px;border-radius:12px;border:1px solid #17172a;backdrop-filter:blur(4px);display:flex;align-items:center;gap:6px}
+#audio-led{width:7px;height:7px;border-radius:50%;background:#6ef6ac;box-shadow:0 0 8px rgba(110,246,172,.6)}
+#audio-led.off{background:#4a5068;box-shadow:none}
+#audio-chip button{padding:1px 6px;background:rgba(0,0,0,.35);border:1px solid #28314d;color:#9fd0ff;font-family:inherit;font-size:8px;border-radius:10px;cursor:pointer}
+#podium{position:absolute;left:12px;bottom:14px;z-index:10;font-size:10px;color:#e8ecff;pointer-events:none;max-width:240px}
+#podium .card{margin-top:5px;padding:6px 8px;border:1px solid #1a1a2e;border-radius:6px;background:rgba(0,0,0,.55);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+#acq{color:#9fd0ff}
+#ticker{color:#3e8c64;overflow:hidden;flex:1;text-align:center;margin:0 12px;white-space:nowrap}
+.trade-step{display:flex;gap:3px;align-items:center;margin-left:8px}
+
+/* agent cards */
+.ac{border-bottom:1px solid #121225;padding:7px 8px;position:relative;transition:background .2s,border-color .2s}
+.ac:hover{background:rgba(255,255,255,.025)}
+.ac.dead{opacity:.44;filter:saturate(.55)}
+.ac-head{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.ac-name{font-size:11px;font-weight:bold;letter-spacing:1px;display:flex;align-items:center;gap:5px;min-width:0}
+.ac-name .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.ac-phil{font-size:8px;letter-spacing:1px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,.05);color:#8b93bd;margin-left:auto;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;color:#7c84a4;font-size:9px;margin:3px 0}
+.ac-bar{height:4px;background:#0a0a12;border-radius:3px;margin:2px 0;overflow:hidden}
+.ac-bar-fill{height:100%;border-radius:3px;transition:width .25s}
+.ac-ally{font-size:8px;margin:3px 0;color:#6f789e;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ac-ally span{padding:0 4px;border-radius:8px;border:1px solid transparent}
+.brain-row,.pulse-row,.rank-row,.price-row,.hold-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:8px;color:#7380a9;gap:6px}
+.brain-tag{padding:1px 4px;border:1px solid #242445;border-radius:8px;background:#101022;color:#aeb8e8;white-space:nowrap}
+.intent{margin-top:4px;padding:4px 6px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,.025),rgba(255,255,255,.01));border:1px solid #17172d;font-size:8px;line-height:1.45;color:#8d98c7}
+.intent b{letter-spacing:.7px}
+.intent-target{display:block;color:#bac5f3;margin-top:1px}
+.hint-bars{display:flex;gap:3px;margin-top:4px}
+.hint-col{flex:1}
+.hint-lbl{font-size:7px;color:#5f698d;margin-bottom:1px;text-transform:uppercase;letter-spacing:.8px}
+.trade-area{display:flex;gap:4px;margin-top:5px;align-items:center;flex-wrap:wrap}
+.trade-btn{padding:2px 7px;border:1px solid #2f3d5f;border-radius:3px;background:rgba(100,150,255,.05);font-size:9px;color:#9fd0ff;cursor:pointer;transition:all .15s}
+.trade-btn:hover{border-color:#8ec5ff;color:#e7f5ff;background:rgba(100,150,255,.11)}
+.trade-btn.sell{border-color:#6b3946;background:rgba(255,90,115,.06);color:#ff9cb0}
+.trade-btn.sell:hover{border-color:#ff728d;color:#ffd2db;background:rgba(255,90,115,.12)}
+.pill{padding:2px 5px;border:1px solid #2a2a42;border-radius:10px;font-size:8px;color:#9da7d8;background:#0e0e1c}
+.owner-pill{padding:2px 6px;border:1px solid #4b4212;border-radius:10px;background:rgba(255,215,0,.08);font-size:8px;color:#ffd76a}
+.owner-pill.rival{border-color:#27415d;background:rgba(80,170,255,.08);color:#9fd0ff}
+.ac .tt{display:none;position:absolute;left:calc(100% + 4px);top:0;background:#0a0a16;border:1px solid #2a2a4a;border-radius:6px;padding:8px 10px;width:235px;z-index:50;font-size:9px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.82)}
+.ac:hover .tt{display:block}
+.tt-title{font-size:10px;font-weight:bold;letter-spacing:1px;margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid #1a1a2e}
+.tt-row{display:flex;justify-content:space-between;padding:1px 0;color:#7d86b4;gap:6px}
+.tt-val{color:#c5cef7}
+.tt-bar{height:3px;background:#111;border-radius:2px;margin:1px 0 3px;overflow:hidden}
+.tt-fill{height:100%;border-radius:2px}
+.tt-sec{margin-top:4px;padding-top:3px;border-top:1px solid #111;font-size:8px;color:#556;letter-spacing:1px}
+
+#start-ov{position:fixed;inset:0;background:rgba(4,4,12,.94);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity .5s}
+#start-ov.hidden{opacity:0;pointer-events:none}
+#start-ov h1{font-size:24px;letter-spacing:8px;margin-bottom:6px;color:#eef2ff}
+#start-ov .sub{color:#8893c5;font-size:11px;max-width:670px;text-align:center;line-height:1.75;margin-bottom:20px;letter-spacing:1px}
+#start-ov .go{padding:14px 50px;border:2px solid #ffd700;border-radius:8px;background:transparent;color:#ffd700;font-family:inherit;font-size:16px;letter-spacing:4px;cursor:pointer;transition:all .3s}
+#start-ov .go:hover{background:rgba(255,215,0,.1);box-shadow:0 0 40px rgba(255,215,0,.15)}
+#start-ov .feat{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:540px;margin-bottom:16px;font-size:10px;color:#8893c5;line-height:1.5}
+#start-ov .feat div{padding:8px;border:1px solid #1a1a2e;border-radius:4px;background:rgba(0,0,0,.32)}
+#start-ov .feat div b{color:#d4daf8;display:block;margin-bottom:2px;letter-spacing:1px}
+#start-ov .modes{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}
+#start-ov .mode{padding:10px 18px;border:1px solid #27314e;border-radius:7px;background:rgba(255,255,255,.02);color:#8ca4db;cursor:pointer;font-size:11px;letter-spacing:1px}
+#start-ov .mode.sel{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.08)}
+
+@media (max-width:1300px){#left{width:280px;min-width:280px}#right{width:280px;min-width:280px}}
+</style>
+</head>
+<body>
+<div id="top">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span id="cash">★ 1000</span>
+    <span class="top-stat">NET: <span id="net-worth" style="color:#ffd76a">1000</span></span>
+    <span class="top-stat">Δ: <span id="pnl" style="color:#667">0</span></span>
+    <span class="top-stat">ROUND: <span id="round-no" style="color:#ffd76a">1</span></span>
+  </div>
+  <h1>CODE ARENA MARKET</h1>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+    <span class="top-stat" id="opponent-label">RIVAL NET: <span id="opp-worth" style="color:#9fd0ff">1000</span></span>
+    <span class="top-stat">MODE: <span id="mode-chip" style="color:#c7cff7">YOU vs AI</span></span>
+    <span class="top-stat" id="gen-ct">GEN 1</span>
+  </div>
+</div>
+<div id="main">
+  <div id="left"><div id="agent-cards"></div></div>
+  <div id="arena-wrap">
+    <canvas id="c"></canvas>
+    <div id="event-log"></div>
+    <div id="round-pulse">ROUND 1 · market open</div>
+    <div id="trade-halt">TRADING HALT · simulation paused for orders</div>
+    <div id="audio-chip"><span id="audio-led"></span><span id="audio-state">AUDIO ON</span><button onclick="toggleAudio()">TOGGLE</button></div>
+    <div id="gen-badge"></div>
+    <div id="podium"></div>
+    <div id="speed-ctrl">
+      <button onclick="toggleRun()" id="pause-btn">PAUSE</button>
+      SPD:
+      <button onclick="setSpd(50)">1x</button>
+      <button class="sel" onclick="setSpd(25)">2x</button>
+      <button onclick="setSpd(8)">5x</button>
+      <button onclick="setSpd(1)">MAX</button>
+    </div>
+  </div>
+  <div id="right">
+    <div id="market-board" class="market-board"></div>
+    <div class="chart-wrap">
+      <div class="panel-title" style="margin:-2px -2px 6px -2px;border-bottom-color:#16162b">NET WORTH</div>
+      <canvas id="portfolioC" width="286" height="150"></canvas>
+    </div>
+    <div class="panel-title">PORTFOLIOS</div>
+    <div id="portfolio-panels"></div>
+    <div class="panel-title">MARKET LEADERBOARD</div>
+    <div id="lb"></div>
+    <div class="panel-title">BRAIN TELLS</div>
+    <div id="brain-list"></div>
+    <div class="panel-title">PHILOSOPHIES</div>
+    <div id="phil-list"></div>
+    <div class="panel-title">TRADE LOG</div>
+    <div id="tx-log"></div>
+  </div>
+</div>
+<div id="bottom">
+  <span id="tick-ct">TICK 0</span>
+  <span id="ticker"></span>
+  <span style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+    <span>TRADE SIZE</span>
+    <span class="trade-step">
+      <button class="bsz sel" data-v="0.05" onclick="setTradeStep(0.05)">5%</button>
+      <button class="bsz" data-v="0.10" onclick="setTradeStep(0.10)">10%</button>
+      <button class="bsz" data-v="0.20" onclick="setTradeStep(0.20)">20%</button>
+    </span>
+    <button class="small-btn" id="switch-btn" onclick="switchTrader()" style="display:none">SWITCH TRADER</button>
+  </span>
+</div>
+
+<div id="start-ov">
+  <h1>CODE ARENA MARKET</h1>
+  <div class="sub">Each arena mind is now a tradable stock. Price is anchored to long-run wins but moves every few beats on recent form, live score, survival, and behavioral signals. You can pause, buy, sell, and rebalance at any moment while a rival investor — either a second person or a computer — fights you on net worth.</div>
+  <div class="modes">
+    <button class="mode sel" id="mode-ai" onclick="setMode('ai')">YOU vs AI</button>
+    <button class="mode" id="mode-pvp" onclick="setMode('pvp')">2 PLAYER HOT SEAT</button>
+  </div>
+  <div class="feat">
+    <div><b>LIVE INVESTING</b>Every agent has a stock price. Buy more, trim, rotate, or hold cash while the arena evolves.</div>
+    <div><b>BALANCED PRICING</b>Prices lean hard on wins, but live score only nudges them. Mean reversion keeps one winner from breaking the market.</div>
+    <div><b>READ THE BRAIN</b>Cards expose intent, pulse timer, trust, drives, rank, and momentum so you can invest off tells rather than luck.</div>
+    <div><b>HEAD-TO-HEAD</b>Play against the computer or switch between two human portfolios on the same screen.</div>
+  </div>
+  <button class="go" onclick="beginArena()">ENTER MARKET</button>
+</div>
+
+<script>
+const CV=document.getElementById('c'),X=CV.getContext('2d');
+const PC=document.getElementById('portfolioC'),PX=PC.getContext('2d');
+const GW=130,GH=85,CL=6;
+CV.width=GW*CL;CV.height=GH*CL;
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+let speed=25,gameRunning=false,paused=false,tick=0,generation=1,roundNo=1;
+let agents=[],drops=[],events=[],tradeLog=[];
+let selectedMode='ai',activeTrader=0,tradeStep=0.05;
+const ROUND_LEN=1100;
+const MARKET_UPDATE_EVERY=12;
+const AI_REBALANCE_EVERY=55;
+const HISTORY_EVERY=14;
+const CFG=[
+  {name:'NEXUS',col:'#00e8ff',cR:'0,232,255',cD:'rgba(0,100,140,'},
+  {name:'CIPHER',col:'#ff2070',cR:'255,32,112',cD:'rgba(140,15,50,'},
+  {name:'PHANTOM',col:'#00ff90',cR:'0,255,144',cD:'rgba(0,100,60,'},
+  {name:'VORTEX',col:'#ff8800',cR:'255,136,0',cD:'rgba(140,70,0,'},
+  {name:'AXIOM',col:'#b040ff',cR:'176,64,255',cD:'rgba(80,20,140,'},
+  {name:'SPECTRE',col:'#ffee00',cR:'255,238,0',cD:'rgba(140,130,0,'}
+];
+let LB=CFG.map((_,i)=>({id:i,wins:0,kills:0,feeds:0,poisonsLaid:0,totalSurv:0,gens:1,roundScore:0,lastRank:6}));
+const PHILS=[
+  {name:'ALTRUIST',test:w=>w[3]>0.65&&w[0]>0.5,desc:'Believes survival comes through giving. Feeds allies, avoids conflict.'},
+  {name:'PREDATOR',test:w=>w[2]>0.65&&w[4]>0.5,desc:'The arena is a hunt. Others exist to be consumed.'},
+  {name:'HERMIT',test:w=>w[5]>0.65&&w[1]>0.5,desc:'Seeks empty space. Trusts no one. Survives by disappearing.'},
+  {name:'DIPLOMAT',test:w=>w[3]>0.5&&w[2]<0.3,desc:'Weaves alliances as armor. Shares resources strategically.'},
+  {name:'ANARCHIST',test:w=>w[4]>0.6&&w[2]>0.4,desc:'Poisons the powerful, feeds the weak. Chaos as philosophy.'},
+  {name:'STOIC',test:w=>w[1]>0.5&&w[5]>0.4&&w[2]<0.4,desc:'Conserves energy, endures. Outlasts rather than outfights.'},
+  {name:'ZEALOT',test:w=>w[2]>0.5&&w[3]>0.5&&w[0]>0.4,desc:'Attacks enemies while sustaining allies. Mission over comfort.'},
+  {name:'NIHILIST',test:w=>w[4]>0.7,desc:'Poisons indiscriminately. Sees destruction as the only truth.'},
+  {name:'PRAGMATIST',test:w=>{const mx=Math.max(...w)-Math.min(...w);return mx<0.25},desc:'No ideology. Pure adaptation to whatever works now.'},
+];
+function getPhil(w){for(const p of PHILS)if(p.test(w))return p;return{name:'EMERGENT',desc:'A philosophy not yet named. Drifting between worldviews.'}}
+let brains=CFG.map(()=>({
+  w:[0.52,0.48,0.52,0.50,0.49,0.50],
+  bias:[0,0,0,0,0,0],
+  trust:new Float32Array(6).fill(0.18),
+  phil:null,philHist:[],
+  lastDecision:{kind:'SCOUT',food:0.5,poison:0.5,target:-1,confidence:0.5,why:'scanning',ctx:{}},
+}));
+let market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name}));
+let investors=[];
+
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function rand(n=1){return (Math.random()-0.5)*n}
+function dist(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)}
+function inBounds(x,y){return x>=0&&x<GW&&y>=0&&y<GH}
+function occupantAt(x,y,ignore=-1){for(const a of agents){if(!a.alive||a.id===ignore)continue;if(a.x===x&&a.y===y)return a}return null}
+function roundTick(){return tick-((roundNo-1)*ROUND_LEN)}
+function roundProgress(){return roundTick()/ROUND_LEN}
+function fmtPct(v){return Math.round(v*100)+'%'}
+function wLabel(i){return['food-seek','fuel-conserve','aggression','altruism','poison-craft','solitude'][i]}
+function toneForIntent(kind){return kind==='POISON'?'#ff6b7f':kind==='FOOD'?'#7bffb6':'#a3b0e6'}
+function dominantTags(a){
+  const picks=a.brain.w.map((v,i)=>({i,v})).sort((m,n)=>n.v-m.v).slice(0,2);
+  return picks.map(p=>wLabel(p.i).replace('fuel-','').replace('poison-','poison ').replace('food-','food ').replace('seek','')).map(t=>t.trim().toUpperCase());
+}
+function investorNetWorth(inv){return inv.cash+inv.shares.reduce((s,sh,i)=>s+sh*market[i].price,0)}
+function holdingValue(inv,i){return inv.shares[i]*market[i].price}
+function allocation(inv,i){const nw=investorNetWorth(inv);return nw>0?holdingValue(inv,i)/nw:0}
+function percentChange(i){const m=market[i];return m.prev?((m.price-m.prev)/m.prev):0}
+function activeInvestor(){return investors[activeTrader]}
+function marketLeader(){return investors[0].netWorth>=investors[1].netWorth?0:1}
+
+
+const audioState={
+  ctx:null,master:null,music:null,comp:null,enabled:true,started:false,
+  lastMove:Array(CFG.length).fill(-999),lastPrice:Array(CFG.length).fill(100),deathHits:[],vol:0.16,
+  lastBeat:-999,beatStep:0,lastBar:-999,
+  warp:{food:0,poison:0,death:0,alliance:0,trade:0}
+};
+function ensureAudio(){
+  if(audioState.ctx)return audioState.ctx;
+  const C=window.AudioContext||window.webkitAudioContext;
+  if(!C)return null;
+  const ctx=new C();
+  const master=ctx.createGain(), music=ctx.createGain(), comp=ctx.createDynamicsCompressor();
+  master.gain.value=audioState.vol; music.gain.value=0.92;
+  comp.threshold.value=-22; comp.knee.value=26; comp.ratio.value=2.0; comp.attack.value=0.025; comp.release.value=0.28;
+  music.connect(comp); comp.connect(master); master.connect(ctx.destination);
+  audioState.ctx=ctx; audioState.master=master; audioState.music=music; audioState.comp=comp; audioState.started=true;
+  syncAudioUI();
+  return ctx;
+}
+function resumeAudio(){const ctx=ensureAudio();if(ctx&&ctx.state==='suspended')ctx.resume();}
+function panForX(x){return clamp((x/(GW-1))*2-1,-1,1)}
+function beatIntervalTicks(){return speed<=1?4:(speed<=8?6:(speed<=25?9:12));}
+function bumpWarp(kind,amt){if(audioState.warp[kind]===undefined)return;audioState.warp[kind]=clamp(audioState.warp[kind]+amt,0,1.4);}
+function decayWarps(){for(const k in audioState.warp)audioState.warp[k]*=0.87;}
+function beatBase(){
+  const leader=[...agents].sort((a,b)=>b.roundScore()-a.roundScore())[0]||agents[0];
+  const roots=[98.00,110.00,123.47,130.81,146.83,164.81];
+  return roots[leader?leader.id%roots.length:0];
+}
+function beep({freq=220,type='sine',dur=0.08,gain=0.04,pan=0,attack=0.005,release=0.12,filter=1800,detune=0,slide=1,q=0.2}){
+  if(!audioState.enabled)return; const ctx=ensureAudio(); if(!ctx)return;
+  const o=ctx.createOscillator(), g=ctx.createGain(), p=ctx.createStereoPanner(), f=ctx.createBiquadFilter();
+  o.type=type; o.frequency.setValueAtTime(Math.max(40,freq),ctx.currentTime); if(slide!==1)o.frequency.exponentialRampToValueAtTime(Math.max(40,freq*slide),ctx.currentTime+dur+release); o.detune.value=detune;
+  f.type='lowpass'; f.frequency.setValueAtTime(filter,ctx.currentTime); f.Q.value=q; p.pan.value=pan;
+  o.connect(f); f.connect(g); g.connect(p); p.connect(audioState.music);
+  g.gain.setValueAtTime(0.0001,ctx.currentTime);
+  g.gain.linearRampToValueAtTime(gain,ctx.currentTime+attack);
+  g.gain.setTargetAtTime(gain*0.75,ctx.currentTime+attack,Math.max(0.03,dur*0.7));
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur+release);
+  o.start(); o.stop(ctx.currentTime+dur+release+0.03);
+}
+function softPad({freq=220,dur=1.6,gain=0.012,pan=0,filter=1500,type='triangle',attack=0.25,release=0.8}){
+  if(!audioState.enabled)return; const ctx=ensureAudio(); if(!ctx)return;
+  const o1=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), p=ctx.createStereoPanner(), f=ctx.createBiquadFilter();
+  o1.type=type; o2.type='sine';
+  o1.frequency.setValueAtTime(freq,ctx.currentTime); o2.frequency.setValueAtTime(freq*1.003,ctx.currentTime);
+  f.type='lowpass'; f.frequency.setValueAtTime(filter,ctx.currentTime); p.pan.value=pan;
+  o1.connect(f); o2.connect(f); f.connect(g); g.connect(p); p.connect(audioState.music);
+  g.gain.setValueAtTime(0.0001,ctx.currentTime);
+  g.gain.linearRampToValueAtTime(gain,ctx.currentTime+attack);
+  g.gain.setTargetAtTime(gain*0.8,ctx.currentTime+attack,0.45);
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur+release);
+  o1.start(); o2.start(); o1.stop(ctx.currentTime+dur+release+0.04); o2.stop(ctx.currentTime+dur+release+0.04);
+}
+function lowPulse({freq=92,gain=0.02,pan=0,filter=580,shape=1}){
+  beep({freq,type:'sine',dur:0.065,gain,pan,filter,attack:0.004,release:0.10,slide:0.985});
+  setTimeout(()=>beep({freq:freq*(shape>1?1.5:2),type:'triangle',dur:0.032,gain:gain*0.38,pan,filter:filter+420,attack:0.003,release:0.055}),18);
+}
+function softTick({freq=420,gain=0.005,pan=0,filter=2100,slide=1.01}){
+  beep({freq,type:'triangle',dur:0.022,gain,pan,filter,attack:0.002,release:0.05,slide});
+}
+function marketChord(base,pan,intensity=0.4,bright=0){
+  const gain=0.006+intensity*0.007;
+  beep({freq:base,type:'triangle',dur:0.12,gain,pan,filter:1400+bright,attack:0.01,release:0.18});
+  setTimeout(()=>beep({freq:base*1.25,type:'sine',dur:0.11,gain:gain*0.82,pan,filter:1800+bright,attack:0.01,release:0.16}),52);
+  setTimeout(()=>beep({freq:base*1.5,type:'triangle',dur:0.10,gain:gain*0.62,pan,filter:2200+bright,attack:0.01,release:0.14}),105);
+}
+function computeTension(){
+  const alive=agents.filter(a=>a.alive); if(!alive.length)return 0;
+  const lowHp=alive.filter(a=>a.hp<35).length/alive.length;
+  const poisonDensity=clamp(drops.filter(d=>d.type==='poison').length/10,0,1);
+  const roundEnd=clamp(roundProgress(),0,1);
+  const closeLead=[...alive].sort((a,b)=>b.roundScore()-a.roundScore());
+  let clash=0; if(closeLead.length>1){const gap=Math.abs(closeLead[0].roundScore()-closeLead[1].roundScore()); clash=1-clamp(gap/220,0,1);}
+  audioState.deathHits=audioState.deathHits.filter(t=>tick-t<140);
+  const deathPulse=clamp(audioState.deathHits.length/4,0,1);
+  const vol=clamp(market.reduce((s,m)=>s+Math.abs((m.price-m.prev)/Math.max(1,m.prev)),0)/CFG.length*22,0,1);
+  return clamp(lowHp*0.22+poisonDensity*0.20+clash*0.18+roundEnd*0.18+deathPulse*0.12+vol*0.10,0,1);
+}
+function beatAudioStep(){
+  if(!audioState.enabled||!audioState.ctx||paused)return;
+  const gap=beatIntervalTicks();
+  if(audioState.lastBeat>=0&&tick-audioState.lastBeat<gap)return;
+  audioState.lastBeat=tick;
+  const t=computeTension(), prog=roundProgress(), step=audioState.beatStep%8;
+  audioState.beatStep=(audioState.beatStep+1)%64;
+  const leader=[...agents].sort((a,b)=>b.roundScore()-a.roundScore())[0]||agents[0];
+  const pan=leader?panForX(leader.x)*0.22:0;
+  const base=beatBase();
+  const kick=[1.0,0.0,0.42,0.0,0.82,0.0,0.30,0.12][step];
+  const tickPat=[0.0,0.18,0.0,0.12,0.0,0.22,0.0,0.12][step];
+  const w=audioState.warp;
+  const bright=600 + t*320 + w.food*850 + w.alliance*420 + prog*280;
+  const dark=1 - clamp(w.poison*0.22 + w.death*0.18,0,0.42);
+  if(kick>0){
+    lowPulse({freq:base*(step===4?0.75:0.5),gain:(0.010+kick*0.018+t*0.006)*(0.96+w.trade*0.10),pan,filter:(440+bright*0.42)*dark,shape:step===4?2:1});
+  }
+  if(tickPat>0){
+    softTick({freq:base*3.0*(1+step*0.006),gain:0.0035+tickPat*0.004+t*0.0018,pan:-pan*0.7,filter:1600+bright*0.7,slide:1.006+w.food*0.01-w.poison*0.008});
+  }
+  if(step===0||step===4){
+    marketChord(base*(step===4?1.122:1),pan,0.28+t*0.55+w.alliance*0.35,bright);
+  }
+  if(w.food>0.18&&(step===2||step===6)){
+    setTimeout(()=>softTick({freq:base*4.0,gain:0.004+w.food*0.003,pan:pan*0.6,filter:2400+w.food*600,slide:1.012}),45);
+  }
+  if(w.poison>0.20&&(step===3||step===7)){
+    setTimeout(()=>beep({freq:base*1.35,type:'triangle',dur:0.055,gain:0.0045+w.poison*0.004,pan:-pan*0.4,filter:1000+w.poison*300,slide:0.965-w.poison*0.015,attack:0.003,release:0.08}),32);
+  }
+  if((w.death>0.24||prog>0.88)&&(step===6||step===7)){
+    setTimeout(()=>beep({freq:base*0.5,type:'sine',dur:0.10,gain:0.004+w.death*0.005+prog*0.003,pan,filter:700+prog*240,slide:0.90,attack:0.008,release:0.16}),60);
+  }
+  if(prog>0.84&&step===0){
+    softPad({freq:base*2,dur:0.55+prog*0.55,gain:0.004+prog*0.004+t*0.002,pan,filter:1600+prog*800+w.food*400,type:'sine',attack:0.08,release:0.28});
+  }
+  if(tick-audioState.lastBar>gap*8 || audioState.lastBar<0){
+    audioState.lastBar=tick;
+    if(t>0.18||prog>0.55)softPad({freq:base,dur:1.0+prog*0.45,gain:0.0038+t*0.003,pan:pan*0.5,filter:1200+bright*0.45,type:'triangle',attack:0.15,release:0.38});
+  }
+  decayWarps();
+}
+function moveAudio(agent){
+  if(!audioState.enabled||tick-audioState.lastMove[agent.id]<11)return;
+  audioState.lastMove[agent.id]=tick;
+  const pan=panForX(agent.x), base=[220,247,262,294,330,370][agent.id%6], step=agent.dir===0?5:agent.dir===1?2:agent.dir===2?-3:-1;
+  const tension=computeTension();
+  softTick({freq:base*Math.pow(2,step/12),gain:0.0018+agent.energy/70000+tension*0.0008,pan,filter:1200+agent.energy*1.2+tension*350,slide:1+(agent.dir===1?0.012:agent.dir===3?-0.010:0)});
+}
+function foodAudio(agent,targetId=-1){
+  const pan=panForX(agent.x); bumpWarp('food',0.34);
+  beep({freq:beatBase()*2,type:'sine',dur:0.08,gain:0.0075,pan,filter:2200,attack:0.01,release:0.12});
+  setTimeout(()=>beep({freq:beatBase()*2.5,type:'triangle',dur:0.06,gain:0.005,pan,filter:2600,attack:0.008,release:0.08}),48);
+  if(targetId>=0&&agents[targetId])setTimeout(()=>softTick({freq:beatBase()*3.2,gain:0.003,pan:panForX(agents[targetId].x),filter:2300,slide:1.01}),72);
+}
+function poisonAudio(agent,targetId=-1){
+  const pan=panForX(agent.x); bumpWarp('poison',0.38);
+  beep({freq:beatBase()*1.25,type:'triangle',dur:0.05,gain:0.007,pan,filter:980,slide:0.93,attack:0.004,release:0.08});
+  setTimeout(()=>beep({freq:beatBase()*1.1,type:'sine',dur:0.045,gain:0.0045,pan:targetId>=0&&agents[targetId]?panForX(agents[targetId].x):pan,filter:900,slide:0.91,attack:0.004,release:0.08}),34);
+}
+function deathAudio(agent){
+  audioState.deathHits.push(tick); bumpWarp('death',0.52);
+  const pan=panForX(agent.x);
+  beep({freq:beatBase(),type:'triangle',dur:0.06,gain:0.010,pan,filter:950,slide:0.74,attack:0.006,release:0.10});
+  setTimeout(()=>softPad({freq:beatBase()*0.5,dur:0.34,gain:0.0048,pan,filter:760,type:'sine',attack:0.03,release:0.18}),42);
+}
+function allianceAudio(a,b){
+  bumpWarp('alliance',0.28);
+  const pan=(panForX(a.x)+panForX(b.x))*0.5;
+  beep({freq:beatBase()*2.0,type:'triangle',dur:0.07,gain:0.006,pan,filter:2200,attack:0.008,release:0.10});
+  setTimeout(()=>beep({freq:beatBase()*2.5,type:'sine',dur:0.06,gain:0.0045,pan,filter:2600,attack:0.008,release:0.09}),40);
+}
+function tradeAudio(kind){
+  bumpWarp('trade',0.20);
+  if(kind==='buy'){
+    softTick({freq:beatBase()*2.8,gain:0.005,pan:-0.12,filter:2100,slide:1.008});
+    setTimeout(()=>softTick({freq:beatBase()*3.2,gain:0.0038,pan:-0.06,filter:2400,slide:1.01}),35);
+  }else{
+    softTick({freq:beatBase()*2.2,gain:0.0048,pan:0.12,filter:1700,slide:0.99});
+    setTimeout(()=>softTick({freq:beatBase()*1.9,gain:0.0035,pan:0.08,filter:1500,slide:0.985}),35);
+  }
+}
+function haltAudio(){bumpWarp('trade',0.12); lowPulse({freq:beatBase()*0.6,gain:0.006,pan:0,filter:540,shape:1});}
+function bellAudio(){
+  beep({freq:beatBase()*3,type:'sine',dur:0.11,gain:0.010,pan:0,filter:2800,attack:0.01,release:0.16});
+  setTimeout(()=>beep({freq:beatBase()*3.75,type:'triangle',dur:0.10,gain:0.0065,pan:0,filter:3200,attack:0.01,release:0.14}),58);
+}
+function toggleAudio(){audioState.enabled=!audioState.enabled; if(audioState.enabled){resumeAudio();} else if(audioState.master&&audioState.ctx){audioState.master.gain.setTargetAtTime(0.0001,audioState.ctx.currentTime,0.05);} syncAudioUI();}
+function syncAudioUI(){const led=document.getElementById('audio-led'); const st=document.getElementById('audio-state'); if(!led||!st)return; led.classList.toggle('off',!audioState.enabled); st.textContent=audioState.enabled?'AUDIO ON':'AUDIO OFF'; if(audioState.master&&audioState.ctx&&audioState.enabled){audioState.master.gain.setTargetAtTime(audioState.vol,audioState.ctx.currentTime,0.08);} }
+class Agent{
+  constructor(id,x,y,gen){
+    this.id=id;this.x=x;this.y=y;this.dir=Math.floor(Math.random()*4);
+    this.alive=true;this.energy=250;this.maxEnergy=350;this.hp=100;this.vision=10;
+    this.allyId=-1;this.allyTimer=0;this.trail=[];
+    this.survTick=0;this.killCount=0;this.feedCount=0;this.poisonCount=0;this.poisonHits=0;this.foodShared=0;this.resourcesConsumed=0;this.allianceTicks=0;
+    this.rSurv=0;this.rKills=0;this.rFeeds=0;this.rPoisonsLaid=0;this.rPoisonHits=0;this.rFoodShared=0;this.rConsumed=0;this.rAllianceTicks=0;
+    this.brain=brains[id];this.gen=gen;
+    this.intent='SCOUT';this.intentColor='#94a1d9';this.intentTarget=-1;this.intentText='Mapping the arena';this.intentWhy='';
+    this.releaseEvery=26+Math.floor((1-this.brain.w[1])*16)+Math.floor(Math.random()*10);
+    this.releaseCd=this.releaseEvery;
+    this.lastPulse='—';
+    this.roundPeak=0;
+  }
+  resetRoundStats(){
+    this.rSurv=0;this.rKills=0;this.rFeeds=0;this.rPoisonsLaid=0;this.rPoisonHits=0;this.rFoodShared=0;this.rConsumed=0;this.rAllianceTicks=0;this.roundPeak=0;
+  }
+  flood(sx,sy,mx=160){
+    let c=0;const seen=new Set();const q=[[sx,sy]];seen.add(sx+','+sy);
+    while(q.length&&c<mx){
+      const [cx,cy]=q.shift();c++;
+      for(const[dx,dy] of DIRS){
+        const nx=cx+dx,ny=cy+dy,key=nx+','+ny;
+        if(!inBounds(nx,ny)||seen.has(key))continue;
+        if(occupantAt(nx,ny,this.id))continue;
+        seen.add(key);q.push([nx,ny]);
+      }
+    }
+    return c;
+  }
+  nearest(alive,mode='enemy'){
+    let best=null,bestD=1e9;
+    for(const a of alive){
+      if(a.id===this.id||!a.alive)continue;
+      if(mode==='ally'&&a.id!==this.allyId)continue;
+      if(mode==='enemy'&&a.id===this.allyId)continue;
+      const d=dist(this,a);if(d<bestD){bestD=d;best=a}
+    }
+    return {agent:best,d:bestD};
+  }
+  sense(alive){
+    const ally=this.allyId>=0?alive.find(a=>a.id===this.allyId&&a.alive):null;
+    const nearestEnemy=this.nearest(alive,'enemy');
+    const nearestAlly=this.nearest(alive,'ally');
+    const weakEnemy=alive.filter(a=>a.id!==this.id&&a.id!==this.allyId&&a.alive).sort((a,b)=>(a.hp+a.energy*0.2)-(b.hp+b.energy*0.2))[0]||null;
+    const weakFriend=ally&&ally.hp<70?ally:(nearestAlly.agent&&nearestAlly.agent.hp<68?nearestAlly.agent:null);
+    const poisonNearby=drops.filter(d=>d.type==='poison'&&d.by!==this.id).filter(d=>Math.abs(d.x-this.x)+Math.abs(d.y-this.y)<7).length;
+    const foodNearby=drops.filter(d=>d.type==='food').filter(d=>Math.abs(d.x-this.x)+Math.abs(d.y-this.y)<8).length;
+    const localCrowd=alive.filter(a=>a.id!==this.id&&Math.abs(a.x-this.x)+Math.abs(a.y-this.y)<10).length;
+    return {ally,weakFriend,nearestEnemy:nearestEnemy.agent,enemyDist:nearestEnemy.d,nearestAlly:nearestAlly.agent,allyDist:nearestAlly.d,weakEnemy,poisonNearby,foodNearby,localCrowd,lowHp:this.hp<45,lowEnergy:this.energy<90,highEnergy:this.energy>220};
+  }
+  projectIntent(alive){
+    const w=this.brain.w,ctx=this.sense(alive);
+    let foodScore=.18+w[3]*1.2+w[0]*0.35+(ctx.weakFriend?0.95:0)+(ctx.foodNearby?-.18:0)+(ctx.lowHp?0.18:0)+(ctx.highEnergy?0.14:0)+(ctx.ally?this.brain.trust[ctx.ally.id]*0.55:0);
+    let poisonScore=.15+w[4]*1.05+w[2]*0.9+(ctx.nearestEnemy&&ctx.enemyDist<12?0.82:0)+(ctx.weakEnemy?((100-ctx.weakEnemy.hp)/100)*0.55:0)+(ctx.localCrowd>2?0.18:0)+(ctx.poisonNearby?-.08:0);
+    if(this.allyId>=0&&ctx.ally&&this.brain.trust[this.allyId]>0.45)foodScore+=0.22;
+    if(this.energy<75){foodScore-=0.16;poisonScore-=0.1}
+    if(this.hp<30)poisonScore+=0.12;
+    if(this.energy>260)foodScore+=0.1;
+    const chooseFood=foodScore>=poisonScore;
+    const target=chooseFood?(ctx.weakFriend?ctx.weakFriend.id:(ctx.ally?ctx.ally.id:-1)):(ctx.weakEnemy?ctx.weakEnemy.id:(ctx.nearestEnemy?ctx.nearestEnemy.id:-1));
+    const confidence=clamp(Math.abs(foodScore-poisonScore)/(Math.max(foodScore,poisonScore,.1)),0.2,0.98);
+    let why='';
+    if(chooseFood){
+      if(ctx.weakFriend)why='ally weak';
+      else if(ctx.highEnergy)why='surplus energy';
+      else if(ctx.lowHp)why='self-recovery soon';
+      else why='trust cycle building';
+    }else{
+      if(ctx.weakEnemy)why='finish vulnerable foe';
+      else if(ctx.nearestEnemy&&ctx.enemyDist<8)why='enemy pressure';
+      else if(ctx.localCrowd>2)why='crowd control';
+      else why='territorial threat';
+    }
+    this.brain.lastDecision={kind:chooseFood?'FOOD':'POISON',food:foodScore,poison:poisonScore,target,confidence,why,ctx};
+    this.intent=chooseFood?'PLOT FOOD':'PLOT POISON';
+    this.intentColor=chooseFood?'#7bffb6':'#ff7a8d';
+    this.intentTarget=target;
+    const targetName=target>=0?CFG[target].name:(chooseFood?'public square':'nearest lane');
+    this.intentText=(chooseFood?'likely feed ':'likely poison ')+targetName;
+    this.intentWhy=why;
+  }
+  evalMove(nx,ny,alive){
+    const w=this.brain.w;let s=0;
+    const space=this.flood(nx,ny,180);s+=space*0.045*(0.35+w[5]*0.65);
+    for(const d of drops){
+      const dd=Math.abs(d.x-nx)+Math.abs(d.y-ny);
+      if(d.type==='food'){
+        const hunger=(this.hp<55?2.4:1.25)+(this.energy<90?1.0:0);
+        if(dd<18)s+=(1-dd/18)*12*w[0]*hunger;
+      }else if(d.type==='poison'&&d.by!==this.id){if(dd<6)s-=(6-dd)*8*(0.45+w[1]*0.55)}
+    }
+    for(const a of alive){
+      if(a.id===this.id||!a.alive)continue;
+      const dd=Math.abs(a.x-nx)+Math.abs(a.y-ny);
+      if(a.id===this.allyId){s+=(1-Math.min(dd,20)/20)*11*(0.35+w[3]*0.85)}
+      else{
+        s+=(1-Math.min(dd,16)/16)*9*w[2];
+        if(dd<4)s-=(4-dd)*3.2*(0.55+w[1]*0.45);
+        if(a.hp<35)s+=(1-Math.min(dd,12)/12)*6*w[2];
+      }
+    }
+    if(occupantAt(nx,ny,this.id))s-=100;
+    if(nx<4||ny<4||nx>GW-5||ny>GH-5)s-=1.6*(0.2+w[5]*0.5);
+    return s;
+  }
+  chooseRelease(alive){
+    const d=this.brain.lastDecision;
+    if(this.energy<18){
+      this.hp-=6;this.intent='STRAIN';this.intentColor='#ff9b66';this.intentText='could not afford release';this.intentWhy='resource debt';addEvent(this.id,'COULD NOT RELEASE — strain');return;
+    }
+    if(d.kind==='FOOD')this.releaseFood(alive,d);else this.releasePoison(alive,d);
+  }
+  releaseFood(alive,dec){
+    let tx=this.x,ty=this.y,targetName='public lane';
+    const ally=dec.target>=0?alive.find(a=>a.id===dec.target&&a.alive):null;
+    if(ally){tx=Math.round((this.x+ally.x)/2);ty=Math.round((this.y+ally.y)/2);targetName=CFG[ally.id].name;}
+    else{const dd=DIRS[(this.dir+2)%4];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2;}
+    tx=clamp(tx,1,GW-2);ty=clamp(ty,1,GH-2);if(occupantAt(tx,ty,this.id)){tx=this.x;ty=this.y}
+    const val=ally&&ally.hp<50?24:18;
+    drops.push({x:tx,y:ty,type:'food',by:this.id,ttl:200,val,age:0,target:ally?ally.id:-1});
+    this.energy-=18+Math.floor(val/4);this.feedCount++;this.rFeeds++;this.lastPulse='FOOD';this.foodShared+=val;this.rFoodShared+=val;
+    this.intent='RELEASED FOOD';this.intentColor='#7bffb6';this.intentText='fed '+targetName;this.intentWhy=dec.why;foodAudio(this,ally?ally.id:-1);addEvent(this.id,'RELEASED FOOD → '+targetName);
+  }
+  releasePoison(alive,dec){
+    const ctx=dec.ctx||this.sense(alive);let foe=dec.target>=0?alive.find(a=>a.id===dec.target&&a.alive):null;if(!foe)foe=ctx.nearestEnemy;
+    let tx=this.x,ty=this.y,targetName='lane trap';
+    if(foe){tx=Math.round(this.x*0.35+foe.x*0.65);ty=Math.round(this.y*0.35+foe.y*0.65);targetName=CFG[foe.id].name;}
+    else{const dd=DIRS[this.dir];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2;}
+    tx=clamp(tx,1,GW-2);ty=clamp(ty,1,GH-2);
+    const val=26+(ctx.weakEnemy?8:0)+(this.brain.w[4]>0.7?4:0);
+    drops.push({x:tx,y:ty,type:'poison',by:this.id,ttl:160,val,age:0,target:foe?foe.id:-1});
+    this.energy-=16+Math.floor(val/6);this.poisonCount++;this.rPoisonsLaid++;this.lastPulse='POISON';
+    this.intent='RELEASED POISON';this.intentColor='#ff7a8d';this.intentText='trapped '+targetName;this.intentWhy=dec.why;poisonAudio(this,foe?foe.id:-1);addEvent(this.id,'RELEASED POISON → '+targetName);
+  }
+  maybeAlliance(alive){
+    if(this.allyTimer>0){this.allyTimer--;this.allianceTicks++;this.rAllianceTicks++;}else this.allyId=-1;
+    if(this.allyId!==-1||Math.random()>0.08)return;
+    let best=-99,bid=-1;
+    for(const a of alive){
+      if(a.id===this.id||!a.alive)continue;
+      const d=dist(this,a);if(d>16)continue;
+      const trust=this.brain.trust[a.id];const compat=1-Math.abs(this.brain.w[3]-a.brain.w[3])*0.5-Math.abs(this.brain.w[2]-a.brain.w[2])*0.3;
+      const score=trust+compat-(a.allyId>=0?0.12:0);if(score>best){best=score;bid=a.id}
+    }
+    if(bid>=0&&best>0.22){
+      this.allyId=bid;this.allyTimer=90+Math.floor(Math.random()*110);
+      const o=agents.find(a=>a.id===bid&&a.alive);if(o&&o.allyId===-1){o.allyId=this.id;o.allyTimer=this.allyTimer}
+      allianceAudio(this,o||this);addEvent(this.id,'ALLIED → '+CFG[bid].name);
+    }
+  }
+  think(alive){
+    if(!this.alive)return;
+    this.survTick++;this.rSurv++;this.energy-=0.46+this.brain.w[2]*0.1+this.brain.w[3]*0.08;this.roundPeak=Math.max(this.roundPeak,this.roundScore());this.releaseCd--;this.projectIntent(alive);this.maybeAlliance(alive);
+    if(this.energy<=0||this.hp<=0){this.die();return}
+    if(this.releaseCd<=0){this.chooseRelease(alive);this.releaseEvery=24+Math.floor((1-this.brain.w[1])*18)+Math.floor(Math.random()*8);this.releaseCd=this.releaseEvery}
+    const opts=[];
+    for(let i=0;i<4;i++){
+      const nx=this.x+DIRS[i][0],ny=this.y+DIRS[i][1];
+      if(!inBounds(nx,ny)||occupantAt(nx,ny,this.id))continue;
+      let s=this.evalMove(nx,ny,alive);if(i===this.dir)s+=2.6;s+=rand(3.8);opts.push({d:i,nx,ny,s});
+    }
+    if(!opts.length){this.hp-=5;if(this.hp<=0)this.die();return}
+    opts.sort((a,b)=>b.s-a.s);const pick=opts[0];
+    this.trail.push({x:this.x,y:this.y,t:tick});if(this.trail.length>135)this.trail.shift();this.dir=pick.d;this.x=pick.nx;this.y=pick.ny;moveAudio(this);
+    for(let i=drops.length-1;i>=0;i--){
+      const d=drops[i];if(d.x!==this.x||d.y!==this.y)continue;
+      if(d.type==='food'){
+        this.hp=clamp(this.hp+d.val,0,100);this.energy=clamp(this.energy+d.val*1.35,0,this.maxEnergy);this.resourcesConsumed+=d.val;this.rConsumed+=d.val;
+        if(d.by!==this.id){this.brain.trust[d.by]=clamp(this.brain.trust[d.by]+0.12,-1,1);brains[d.by].w[3]=clamp(brains[d.by].w[3]+0.008,0.02,0.98);addEvent(this.id,'ATE FOOD from '+CFG[d.by].name)}
+        else addEvent(this.id,'ATE OWN CACHE');
+        drops.splice(i,1);
+      }else if(d.type==='poison'&&d.by!==this.id){
+        this.hp-=d.val;this.brain.trust[d.by]=clamp(this.brain.trust[d.by]-0.24,-1,1);const owner=agents[d.by];if(owner){owner.poisonHits++;owner.rPoisonHits++;}
+        brains[d.by].w[4]=clamp(brains[d.by].w[4]+0.007,0.02,0.98);brains[d.by].w[2]=clamp(brains[d.by].w[2]+0.005,0.02,0.98);addEvent(this.id,'POISONED by '+CFG[d.by].name+'!');
+        drops.splice(i,1);if(this.hp<=0){if(owner){owner.killCount++;owner.rKills++;}this.die();return}
+      }
+    }
+    for(const a of alive){
+      if(a.id===this.id||!a.alive)continue;
+      if(a.x===this.x&&a.y===this.y){
+        const allyClash=(a.id===this.allyId);this.hp-=allyClash?8:16;a.hp-=allyClash?8:16;if(!allyClash){this.brain.trust[a.id]-=0.06;a.brain.trust[this.id]-=0.06}
+        if(this.hp<=0){a.killCount++;a.rKills++;this.die()}
+        if(a.hp<=0){this.killCount++;this.rKills++;a.die()}
+      }
+    }
+  }
+  roundScore(){
+    const life=this.alive?38:0;
+    return Math.round(life+this.rSurv*0.18+this.hp*0.75+this.energy*0.18+this.rKills*56+this.rPoisonHits*18+this.rFeeds*24+this.rFoodShared*0.42+this.rAllianceTicks*0.10+this.rConsumed*0.24-this.rPoisonsLaid*1.2);
+  }
+  die(){
+    if(!this.alive)return;
+    this.alive=false;deathAudio(this);addEvent(this.id,'DIED');
+    const score=this.roundScore()/260;const br=this.brain,lr=0.055;
+    for(let i=0;i<6;i++){
+      let grad=(score-0.75)*lr*(0.5+Math.random());
+      if(i===2)grad+=(this.killCount>1?0.01:-0.005);
+      if(i===3)grad+=(this.feedCount>1?0.01:-0.004);
+      if(i===4)grad+=(this.poisonHits>0?0.008:-0.004);
+      if(i===1)grad+=(this.energy<70?0.008:0);
+      br.w[i]=clamp(br.w[i]+grad+br.bias[i]*0.012+rand(0.01),0.02,0.98);
+      br.bias[i]=br.bias[i]*0.88+grad*0.4;
+    }
+    for(let i=0;i<6;i++)br.trust[i]*=0.86;
+    br.phil=getPhil(br.w);br.philHist.push(br.phil.name);if(br.philHist.length>20)br.philHist.shift();
+    LB[this.id].totalSurv+=this.survTick;LB[this.id].kills+=this.killCount;LB[this.id].feeds+=this.feedCount;LB[this.id].poisonsLaid+=this.poisonCount;
+    setTimeout(()=>respawn(this.id),900+Math.random()*700);
+  }
+}
+
+function respawn(id){
+  let rx,ry,tries=0;do{rx=8+Math.floor(Math.random()*(GW-16));ry=8+Math.floor(Math.random()*(GH-16));tries++}while(occupantAt(rx,ry)&&tries<300);
+  const br=brains[id];for(let i=0;i<6;i++)br.w[i]=clamp(br.w[i]+rand(0.06),0.02,0.98);br.phil=getPhil(br.w);LB[id].gens++;generation=Math.max(...LB.map(l=>l.gens));agents[id]=new Agent(id,rx,ry,LB[id].gens);addEvent(id,'RESPAWNED (Gen '+LB[id].gens+')');
+}
+
+function initInvestors(){
+  investors=[
+    {name:'YOU',color:'#ffd700',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,trades:0,pnl:0},
+    {name:'AI RIVAL',color:'#9fd0ff',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,trades:0,pnl:0}
+  ];
+  activeTrader=0;
+  applyInvestorNames();
+}
+
+function applyInvestorNames(){
+  if(!investors.length)return;
+  investors[0].name=selectedMode==='ai'?'YOU':'PLAYER A';
+  investors[1].name=selectedMode==='ai'?'AI RIVAL':'PLAYER B';
+  if(selectedMode==='ai')activeTrader=0;
+}
+
+function setMode(mode){
+  selectedMode=mode;
+  document.getElementById('mode-ai').classList.toggle('sel',mode==='ai');
+  document.getElementById('mode-pvp').classList.toggle('sel',mode==='pvp');
+}
+function switchTrader(){if(selectedMode!=='pvp')return;activeTrader=1-activeTrader;renderAllPanels();}
+function setTradeStep(v){tradeStep=v;document.querySelectorAll('.bsz').forEach(b=>b.classList.toggle('sel',Math.abs(parseFloat(b.dataset.v)-v)<0.001));renderCards();}
+function syncPauseUI(){document.getElementById('pause-btn').textContent=paused?'RUN':'PAUSE';document.getElementById('trade-halt').classList.toggle('show',paused);}
+function pauseForTrade(){paused=true;syncPauseUI();haltAudio();}
+function toggleRun(){paused=!paused;resumeAudio();syncPauseUI();if(!paused)bellAudio();}
+function setSpd(v){speed=v;document.querySelectorAll('#speed-ctrl button').forEach(b=>{const m={'1x':50,'2x':25,'5x':8,'MAX':1};if(m[b.textContent]!==undefined)b.classList.toggle('sel',m[b.textContent]===v)});}
+
+function tradeStock(invId,stockId,dollars){
+  const inv=investors[invId],price=market[stockId].price;
+  if(dollars>0){tradeAudio('buy');
+    const spend=Math.min(inv.cash,dollars);if(spend<1)return false;
+    const shares=spend/price;inv.cash-=spend;inv.shares[stockId]+=shares;
+    tradeLog.push({who:invId,id:stockId,kind:'BUY',amt:spend,shares,price,tick});
+  }else if(dollars<0){tradeAudio('sell');
+    const maxValue=inv.shares[stockId]*price;const sell=Math.min(maxValue,-dollars);if(sell<1)return false;
+    const shares=sell/price;inv.shares[stockId]-=shares;inv.cash+=sell;
+    tradeLog.push({who:invId,id:stockId,kind:'SELL',amt:sell,shares,price,tick});
+  }else return false;
+  inv.trades++;if(tradeLog.length>90)tradeLog.shift();
+  updatePortfolioStats();
+  renderAllPanels();
+  return true;
+}
+function buyAlloc(stockId){
+  pauseForTrade();
+  const inv=activeInvestor();const dollars=investorNetWorth(inv)*tradeStep;tradeStock(activeTrader,stockId,dollars);
+}
+function sellAlloc(stockId){
+  pauseForTrade();
+  const inv=activeInvestor();const dollars=Math.min(holdingValue(inv,stockId),investorNetWorth(inv)*tradeStep);tradeStock(activeTrader,stockId,-dollars);
+}
+function rebalanceAI(){
+  if(selectedMode!=='ai')return;
+  const ai=investors[1],nw=investorNetWorth(ai);
+  const live=liveRankings();
+  const ranks={};live.forEach((a,idx)=>ranks[a.id]=idx+1);
+  const sig=CFG.map((_,i)=>{
+    const a=agents[i],m=market[i],d=a.brain.lastDecision;
+    const base=100 + LB[i].wins*8 + (7-ranks[i])*5 + a.roundScore()*0.03 + (a.alive?4:-6) + d.confidence*8 + (d.kind==='FOOD'?1.2:0);
+    return {i,score:base/(m.price/100)};
+  }).sort((a,b)=>b.score-a.score);
+  const preferred=sig.slice(0,2).map(x=>x.i);
+  const avoid=sig.slice(-2).map(x=>x.i);
+  preferred.forEach((i,idx)=>{
+    const desired=(idx===0?0.34:0.22);const cur=allocation(ai,i);if(cur<desired-0.03)tradeStock(1,i,Math.min(ai.cash,nw*(desired-cur)*0.65));
+  });
+  avoid.forEach(i=>{const curVal=holdingValue(ai,i);if(curVal>nw*0.08)tradeStock(1,i,-nw*0.07);});
+  if(ai.cash>nw*0.35)tradeStock(1,preferred[0],Math.min(ai.cash,nw*0.12));
+}
+
+function marketSignalFor(i,meanScore,spread){
+  const a=agents[i],lb=LB[i],d=a.brain.lastDecision;
+  const relative=((a.roundScore()-meanScore)/(spread+25));
+  const structure=82 + lb.wins*11 + lb.kills*0.7 + lb.feeds*0.45 + (lb.gens-1)*1.6;
+  const live=relative*15 + (a.alive?4:-7) + a.rKills*5 + a.rFeeds*3 + d.confidence*5 + (d.kind==='FOOD'?1.5:0.5);
+  return structure+live+market[i].eventBoost;
+}
+function updateMarketPrices(){
+  const scores=agents.map(a=>a.roundScore());
+  const mean=scores.reduce((s,v)=>s+v,0)/scores.length;
+  const spread=Math.sqrt(scores.reduce((s,v)=>s+(v-mean)*(v-mean),0)/scores.length)||1;
+  const raws=CFG.map((_,i)=>marketSignalFor(i,mean,spread));
+  const rawAvg=raws.reduce((s,v)=>s+v,0)/raws.length;
+  raws.forEach((raw,i)=>{
+    const m=market[i];
+    m.prev=m.price;
+    const normalized=raw*(100/rawAvg);
+    m.target=clamp(normalized,40,215);
+    const diff=(m.target-m.price)/m.price;
+    const move=clamp(diff*0.18 + m.momentum*0.15 + rand(0.006),-0.035,0.035);
+    m.price=clamp(m.price*(1+move),22,260);
+    m.momentum=clamp(m.momentum*0.65+move*0.9,-0.08,0.08);
+    m.eventBoost*=0.93;
+    m.signal=m.target;
+    if(tick%HISTORY_EVERY===0){m.hist.push(m.price);if(m.hist.length>160)m.hist.shift()}
+  });
+  updatePortfolioStats();
+}
+function updatePortfolioStats(){
+  investors.forEach(inv=>{inv.netWorth=Math.round(investorNetWorth(inv));inv.pnl=Math.round(inv.netWorth-1000);if(tick%HISTORY_EVERY===0){inv.history.push(inv.netWorth);if(inv.history.length>160)inv.history.shift();}})
+}
+
+function settleRound(){
+  const ranking=[...agents].sort((a,b)=>b.roundScore()-a.roundScore());
+  ranking.forEach((a,idx)=>{LB[a.id].lastRank=idx+1;LB[a.id].roundScore=a.roundScore();if(idx===0)LB[a.id].wins++;});
+  const swing=[1.09,1.05,1.02,0.99,0.97,0.94];
+  ranking.forEach((a,idx)=>{market[a.id].price=clamp(market[a.id].price*swing[idx],22,260);market[a.id].eventBoost+=(idx===0?16:idx===1?8:idx===2?3:-2);});
+  bellAudio();
+  const top=ranking.slice(0,3).map((a,i)=>`${i+1}. ${CFG[a.id].name}`);
+  document.getElementById('podium').innerHTML=`<div class="card"><div style="color:#ffd76a;font-size:9px;letter-spacing:1px">ROUND ${roundNo} PODIUM</div><div style="margin-top:4px;line-height:1.5">${top.map((t,i)=>`<div style="color:${CFG[ranking[i].id].col}">${t} · ${ranking[i].roundScore()} pts · ${i===0?'+9%':i===1?'+5%':'+2%'} stock</div>`).join('')}</div></div>`;
+  addEvent(ranking[0].id,'ROUND '+roundNo+' WINNER');
+  brains.forEach((b,i)=>{
+    const rank=LB[i].lastRank;const reward=(7-rank)*0.008;
+    b.w[1]=clamp(b.w[1]+(rank>3?0.01:-0.003),0.02,0.98);
+    b.w[2]=clamp(b.w[2]+(rank<=2?0.008:-0.004),0.02,0.98);
+    b.w[3]=clamp(b.w[3]+(agents[i].rFeeds>agents[i].rPoisonHits?0.006:-0.003),0.02,0.98);
+    b.w[4]=clamp(b.w[4]+(agents[i].rPoisonHits>0?0.006:-0.003),0.02,0.98);
+    b.w[5]=clamp(b.w[5]+(rank>4?0.007:-0.002),0.02,0.98);
+    b.w[0]=clamp(b.w[0]+reward+rand(0.01),0.02,0.98);
+    b.phil=getPhil(b.w);
+  });
+  agents.forEach(a=>a.resetRoundStats());
+  roundNo++;
+  updatePortfolioStats();
+  renderAllPanels();
+}
+function maybeAdvanceRound(){if(roundTick()>=ROUND_LEN)settleRound();}
+
+function addEvent(id,msg){
+  events.push({id,msg,at:Date.now()});if(events.length>7)events.shift();
+  document.getElementById('event-log').innerHTML=events.map(e=>`<div class="ev" style="color:${CFG[e.id].col};text-shadow:0 0 10px rgba(${CFG[e.id].cR},0.18)">${CFG[e.id].name}: ${e.msg}</div>`).join('');
+}
+
+function renderCards(){
+  const invA=investors[0],invB=investors[1],cur=activeInvestor();
+  document.getElementById('agent-cards').innerHTML=agents.map((a,i)=>{
+    const c=CFG[i],b=a.brain,ph=b.phil||getPhil(b.w),dec=b.lastDecision;const rank=currentRankFor(i);const pulsePct=clamp(1-a.releaseCd/a.releaseEvery,0,1)*100;const tags=dominantTags(a);
+    const pct=percentChange(i),pctCol=pct>=0?'#18d26e':'#ff5b5b';const price=market[i].price.toFixed(1);
+    const youAlloc=allocation(invA,i),rivAlloc=allocation(invB,i),actAlloc=allocation(cur,i),actShares=cur.shares[i];
+    const trustHtml=CFG.map((c2,j)=>{if(j===i)return'';const tv=b.trust[j];return`<span style="color:${tv>0.3?c2.col:tv<-0.1?'#ff6c6c':'#5e688f'}">${c2.name.slice(0,3)}:${tv.toFixed(1)}</span>`}).join(' ');
+    const wBars=b.w.map((v,j)=>`<div class="tt-row"><span>${wLabel(j)}</span><span class="tt-val">${(v*100)|0}%</span></div><div class="tt-bar"><div class="tt-fill" style="width:${v*100}%;background:${c.col}"></div></div>`).join('');
+    return `<div class="ac ${a.alive?'':'dead'}" style="border-left:2px solid ${c.col}${a.alive?'':'44'}">
+      <div class="tt">
+        <div class="tt-title" style="color:${c.col}">${c.name} — Gen ${a.gen}</div>
+        <div class="tt-row"><span>Stock price</span><span class="tt-val">${price}★</span></div>
+        <div class="tt-row"><span>Round rank</span><span class="tt-val">#${rank}</span></div>
+        <div class="tt-row"><span>Round score</span><span class="tt-val">${a.roundScore()}</span></div>
+        <div class="tt-row"><span>Total wins</span><span class="tt-val">${LB[i].wins}</span></div>
+        <div class="tt-row"><span>Pulse</span><span class="tt-val">${a.releaseCd}/${a.releaseEvery}</span></div>
+        <div class="tt-sec">NEURAL WEIGHTS</div>
+        ${wBars}
+        <div class="tt-sec">TRUST</div>
+        <div style="font-size:8px">${trustHtml}</div>
+        <div class="tt-sec">PORTFOLIO</div>
+        <div style="font-size:8px;color:#8f99cd">${investors[0].name}: ${(youAlloc*100).toFixed(1)}% · ${invA.shares[i].toFixed(2)} sh</div>
+        <div style="font-size:8px;color:#8f99cd">${investors[1].name}: ${(rivAlloc*100).toFixed(1)}% · ${invB.shares[i].toFixed(2)} sh</div>
+        <div class="tt-sec">INTENT</div>
+        <div style="font-size:8px;color:#8f99cd">${dec.kind} · ${(dec.confidence*100)|0}% · ${dec.why}</div>
+        <div class="tt-sec">PHILOSOPHY</div>
+        <div style="font-size:8px;color:#8893c5;font-style:italic">${ph.desc}</div>
+      </div>
+      <div class="ac-head">
+        <div class="ac-name"><span class="dot" style="background:${c.col};box-shadow:0 0 5px ${c.col}"></span>${c.name} ${a.alive?'':'☠'}</div>
+        <span class="ac-phil">${ph.name}</span>
+      </div>
+      <div class="ac-stats"><span>HP:${a.hp|0}</span><span>E:${a.energy|0}</span><span>${a.rKills}K</span><span>#${rank}</span></div>
+      <div class="ac-bar"><div class="ac-bar-fill" style="width:${a.hp}%;background:${a.hp<30?'#f44':'#39d27b'}"></div></div>
+      <div class="ac-bar"><div class="ac-bar-fill" style="width:${a.energy/a.maxEnergy*100}%;background:${a.energy<60?'#ff9d43':'#2ab4ff'}"></div></div>
+      <div class="price-row"><span>stock ${price}★</span><span style="color:${pctCol}">${pct>=0?'+':''}${(pct*100).toFixed(1)}%</span></div>
+      <div class="pulse-row"><span>PULSE ${a.releaseCd}</span><span>${a.lastPulse}</span></div>
+      <div class="ac-bar"><div class="ac-bar-fill" style="width:${pulsePct}%;background:${dec.kind==='POISON'?'#ff5a73':'#6ef6ac'}"></div></div>
+      ${a.allyId>=0?`<div class="ac-ally">⚐ ally <span style="background:${CFG[a.allyId].col}22;color:${CFG[a.allyId].col};border-color:${CFG[a.allyId].col}44">${CFG[a.allyId].name}</span></div>`:''}
+      <div class="hint-bars">
+        <div class="hint-col"><div class="hint-lbl">food</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.food*45)}%;background:#6ef6ac"></div></div></div>
+        <div class="hint-col"><div class="hint-lbl">poison</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.poison*45)}%;background:#ff6c82"></div></div></div>
+      </div>
+      <div class="brain-row"><span class="brain-tag">${tags[0]}</span><span class="brain-tag">${tags[1]}</span></div>
+      <div class="rank-row"><span>score ${a.roundScore()}</span><span>wins ${LB[i].wins}</span></div>
+      <div class="hold-row"><span>${cur.name}: ${(actAlloc*100).toFixed(1)}%</span><span>${actShares.toFixed(2)} sh</span></div>
+      <div class="intent" style="border-color:${toneForIntent(dec.kind)}33">
+        <b style="color:${toneForIntent(dec.kind)}">${dec.kind}</b> ${(dec.confidence*100)|0}% — ${a.intentText}
+        <span class="intent-target">why: ${dec.why}</span>
+      </div>
+      <div class="trade-area">
+        <button class="trade-btn sell" data-trade="sell" data-stock="${i}">SELL ${(tradeStep*100)|0}%</button>
+        <button class="trade-btn" data-trade="buy" data-stock="${i}">BUY ${(tradeStep*100)|0}%</button>
+        <span class="pill">${market[i].signal.toFixed(0)} fair</span>
+        <span class="owner-pill">${investors[0].name} ${(youAlloc*100).toFixed(0)}%</span>
+        <span class="owner-pill rival">${investors[1].name} ${(rivAlloc*100).toFixed(0)}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function liveRankings(){return [...agents].sort((a,b)=>b.roundScore()-a.roundScore())}
+function currentRankFor(id){return liveRankings().findIndex(a=>a.id===id)+1}
+
+function renderMarketBoard(){
+  const a=activeInvestor(),b=investors[1-activeTrader];const fill=clamp(roundTick()/ROUND_LEN,0,1)*100;const lead=marketLeader();
+  document.getElementById('market-board').innerHTML=`
+    <div class="row"><span>ROUND ${roundNo}</span><span id="accent">${Math.max(0,ROUND_LEN-roundTick())} ticks</span></div>
+    <div class="meter"><div class="fill" style="width:${fill}%"></div></div>
+    <div class="row"><span>active trader</span><span style="color:${a.color}">${a.name}</span></div>
+    <div class="row"><span>cash / net</span><span>${Math.round(a.cash)}★ / ${a.netWorth}★</span></div>
+    <div class="row"><span>leader</span><span style="color:${investors[lead].color}">${investors[lead].name}</span></div>
+    <div class="row"><span>pricing</span><span>wins + live form + reversion</span></div>
+    <div style="font-size:8px;color:#93a0d5;line-height:1.5;margin-top:6px">Each name has a live share price. Clicking BUY or SELL triggers a trading halt so the board freezes while you place orders. Price is anchored to accumulated wins, but only moves a few percent per update, so one lucky spike cannot dominate forever.</div>
+    <div class="mode-btns">
+      <button class="${selectedMode==='ai'?'sel':''}" onclick="setMode('ai');syncModeUI()">YOU vs AI</button>
+      <button class="${selectedMode==='pvp'?'sel':''}" onclick="setMode('pvp');syncModeUI()">2 PLAYER</button>
+      ${selectedMode==='pvp'?`<button class="sel" onclick="switchTrader()">SWITCH → ${b.name}</button>`:''}
+    </div>`;
+}
+function syncModeUI(){
+  applyInvestorNames();
+  document.getElementById('mode-chip').textContent=selectedMode==='ai'?'YOU vs AI':'HOT SEAT';
+  document.getElementById('switch-btn').style.display=selectedMode==='pvp'?'inline-block':'none';
+  document.getElementById('opponent-label').innerHTML=(selectedMode==='ai'?'RIVAL NET: ':'PLAYER B NET: ')+'<span id="opp-worth" style="color:#9fd0ff">'+investors[1].netWorth+'</span>';
+  renderAllPanels();
+}
+
+function renderPortfolioPanels(){
+  document.getElementById('portfolio-panels').innerHTML=investors.map((inv,idx)=>{
+    const total=investorNetWorth(inv);const holdings=CFG.map((c,i)=>({i,val:holdingValue(inv,i),alloc:allocation(inv,i)})).filter(h=>h.val>1).sort((a,b)=>b.val-a.val).slice(0,3);
+    return `<div class="portfolio-card" style="border-color:${inv.color}33;background:linear-gradient(180deg,${inv.color}08,rgba(255,255,255,.015))">
+      <div class="row"><span style="color:${inv.color};font-size:11px;letter-spacing:1px">${inv.name}</span><span>${idx===activeTrader?'<span id="accent">ACTIVE</span>':''}</span></div>
+      <div class="row"><span>cash</span><span>${Math.round(inv.cash)}★</span></div>
+      <div class="row"><span>net worth</span><span>${inv.netWorth}★</span></div>
+      <div class="row"><span>return</span><span style="color:${inv.pnl>=0?'#18d26e':'#ff5b5b'}">${inv.pnl>=0?'+':''}${inv.pnl}★</span></div>
+      <div class="row"><span>trades</span><span>${inv.trades}</span></div>
+      <div style="margin-top:5px;font-size:8px;color:#8f99cd">${holdings.length?holdings.map(h=>`<div class="row"><span style="color:${CFG[h.i].col}">${CFG[h.i].name}</span><span>${(h.alloc*100).toFixed(1)}%</span></div>`).join(''):'all cash'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLB(){
+  const sorted=[...CFG.keys()].map(i=>({id:i,price:market[i].price,chg:percentChange(i),wins:LB[i].wins,score:agents[i].roundScore()})).sort((a,b)=>(b.price+b.wins*3+b.score*0.04)-(a.price+a.wins*3+a.score*0.04));
+  document.getElementById('lb').innerHTML=sorted.map((e,i)=>`<div class="lb-row"><span class="r">#${i+1}</span><div style="flex:1"><span style="color:${CFG[e.id].col};font-size:9px">${CFG[e.id].name}</span><div class="lb-meta">${e.wins}W · score ${e.score}</div></div><span style="color:${e.chg>=0?'#18d26e':'#ff5b5b'}">${market[e.id].price.toFixed(1)}★</span></div>`).join('');
+}
+function renderPhils(){
+  document.getElementById('phil-list').innerHTML=agents.map((a,i)=>{const c=CFG[i],ph=a.brain.phil||getPhil(a.brain.w);const hist=a.brain.philHist.slice(-4).join(' → ');return `<div class="phil-row" style="border-color:${c.col}22"><div class="phil-name" style="color:${c.col}">${c.name}: ${ph.name}</div><div class="phil-text">${ph.desc}</div><div class="phil-traits">${hist||'no drift yet'}</div></div>`;}).join('');
+}
+function renderBrainList(){
+  const ranking=liveRankings().slice(0,4);
+  document.getElementById('brain-list').innerHTML=ranking.map(a=>{const c=CFG[a.id],d=a.brain.lastDecision;const target=d.target>=0?CFG[d.target].name:(d.kind==='FOOD'?'lane':'trap');return `<div class="brain-row-panel" style="border-color:${c.col}22"><div class="brain-name" style="color:${c.col}">${c.name} · ${d.kind}</div><div class="brain-text">${d.why}. ${(d.confidence*100)|0}% confidence toward ${target}.</div><div class="brain-micro">pulse ${a.releaseCd}/${a.releaseEvery} · score ${a.roundScore()} · stock ${market[a.id].price.toFixed(1)}★</div></div>`;}).join('');
+}
+function renderTxLog(){
+  document.getElementById('tx-log').innerHTML=tradeLog.slice(-14).reverse().map(t=>{const inv=investors[t.who],c=CFG[t.id],col=t.kind==='BUY'?'#9fd0ff':'#ff9cb0';return `<div class="tx-row"><span style="color:${inv.color}">${inv.name}</span><span style="color:${c.col};flex:1;text-align:center">${c.name}</span><span style="color:${col}">${t.kind} ${Math.round(t.amt)}★</span></div>`;}).join('')||'<div style="font-size:8px;color:#5c688e">no trades yet</div>';
+}
+function drawPortfolioChart(){
+  PX.clearRect(0,0,PC.width,PC.height);
+  PX.fillStyle='#07070f';PX.fillRect(0,0,PC.width,PC.height);
+  const lines=[investors[0].history,investors[1].history,market[0].hist.map((_,idx)=>1000*(market.reduce((s,m)=>s+(m.hist[idx]||m.price),0)/CFG.length)/100)];
+  const vals=lines.flat();if(vals.length<2)return;
+  const min=Math.min(...vals),max=Math.max(...vals),range=Math.max(1,max-min),pad=10;
+  for(let i=0;i<4;i++){const y=pad+i*(PC.height-pad*2)/3;PX.strokeStyle='rgba(40,40,70,.45)';PX.beginPath();PX.moveTo(0,y);PX.lineTo(PC.width,y);PX.stroke();}
+  const specs=[{arr:investors[0].history,col:investors[0].color},{arr:investors[1].history,col:investors[1].color},{arr:lines[2],col:'#6fe0a8'}];
+  specs.forEach(sp=>{if(sp.arr.length<2)return;PX.beginPath();sp.arr.forEach((v,i)=>{const x=pad+i*(PC.width-pad*2)/Math.max(1,sp.arr.length-1);const y=PC.height-pad-((v-min)/range)*(PC.height-pad*2);if(i===0)PX.moveTo(x,y);else PX.lineTo(x,y);});PX.strokeStyle=sp.col;PX.lineWidth=1.6;PX.stroke();});
+  PX.fillStyle=investors[0].color;PX.font='9px Courier New';PX.fillText(investors[0].name,8,12);PX.fillStyle=investors[1].color;PX.fillText(investors[1].name,84,12);PX.fillStyle='#6fe0a8';PX.fillText('INDEX',175,12);
+}
+
+function renderAllPanels(){renderCards();renderMarketBoard();renderPortfolioPanels();renderLB();renderBrainList();renderPhils();renderTxLog();drawPortfolioChart();updateUI();}
+
+function updateUI(){
+  updatePortfolioStats();
+  document.getElementById('cash').innerHTML='★ '+Math.round(activeInvestor().cash);
+  document.getElementById('net-worth').textContent=activeInvestor().netWorth;
+  const pnlEl=document.getElementById('pnl');pnlEl.textContent=(activeInvestor().pnl>=0?'+':'')+activeInvestor().pnl;pnlEl.style.color=activeInvestor().pnl>=0?'#17d86b':'#ff5e5e';
+  document.getElementById('round-no').textContent=roundNo;
+  document.getElementById('opp-worth').textContent=investors[1-activeTrader].netWorth;
+  document.getElementById('gen-ct').textContent='GEN '+generation;
+  document.getElementById('tick-ct').textContent='TICK '+tick;
+  document.getElementById('gen-badge').textContent='ROUND '+roundNo+' · GEN '+generation;
+  document.getElementById('round-pulse').textContent='ROUND '+roundNo+' · market open · '+(ROUND_LEN-roundTick())+' ticks left';
+  document.getElementById('mode-chip').textContent=selectedMode==='ai'?'YOU vs AI':'HOT SEAT';
+  syncPauseUI();
+}
+
+function draw(){
+  X.fillStyle='#06060e';X.fillRect(0,0,CV.width,CV.height);
+  X.strokeStyle='rgba(30,30,54,.28)';X.lineWidth=.5;
+  for(let i=0;i<GW;i+=10){X.beginPath();X.moveTo(i*CL,0);X.lineTo(i*CL,CV.height);X.stroke()}
+  for(let j=0;j<GH;j+=10){X.beginPath();X.moveTo(0,j*CL);X.lineTo(CV.width,j*CL);X.stroke()}
+  for(const d of drops){
+    d.age++;
+    if(d.type==='food'){
+      const pulse=.55+Math.sin((tick+d.x)/7)*.28;X.fillStyle=`rgba(70,235,120,${pulse})`;X.shadowColor='#0f4';X.shadowBlur=8;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL/2+1.4,0,6.28);X.fill();X.strokeStyle=CFG[d.by].col+'55';X.lineWidth=.7;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL+1.5,0,6.28);X.stroke();
+    }else{
+      const pulse=.5+Math.sin((tick+d.y)/5)*.32;X.fillStyle=`rgba(255,35,70,${pulse})`;X.shadowColor='#f22';X.shadowBlur=8;const cx=d.x*CL+CL/2,cy=d.y*CL+CL/2;X.beginPath();X.moveTo(cx,cy-CL/2-1);X.lineTo(cx+CL/2+1,cy);X.lineTo(cx,cy+CL/2+1);X.lineTo(cx-CL/2-1,cy);X.closePath();X.fill();X.strokeStyle=CFG[d.by].col+'44';X.lineWidth=.6;X.stroke();
+    }
+    X.shadowBlur=0;
+  }
+  X.setLineDash([3,5]);X.lineWidth=.9;
+  agents.forEach(a=>{if(!a.alive||a.allyId<0)return;const b=agents[a.allyId];if(!b||!b.alive)return;const g=X.createLinearGradient(a.x*CL,a.y*CL,b.x*CL,b.y*CL);g.addColorStop(0,CFG[a.id].col+'33');g.addColorStop(1,CFG[b.id].col+'33');X.strokeStyle=g;X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(b.x*CL+CL/2,b.y*CL+CL/2);X.stroke()});
+  X.setLineDash([]);
+  agents.forEach((a,idx)=>{
+    const c=CFG[idx],tl=a.trail.length;
+    for(let i=0;i<tl;i++){const age=(tl-i)/tl;X.fillStyle=c.cD+(0.08+age*0.44)+')';X.fillRect(a.trail[i].x*CL,a.trail[i].y*CL,CL,CL)}
+    if(!a.alive){for(let e=0;e<5;e++){const r=2+Math.random()*10,an=Math.random()*6.28;X.fillStyle=`rgba(${c.cR},${0.2+Math.random()*0.3})`;X.beginPath();X.arc(a.x*CL+CL/2+Math.cos(an)*r,a.y*CL+CL/2+Math.sin(an)*r,1+Math.random()*2,0,6.28);X.fill()}return}
+    X.strokeStyle=`rgba(${c.cR},0.055)`;X.lineWidth=.6;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,a.vision*CL,0,6.28);X.stroke();
+    const d=a.brain.lastDecision;
+    if(a.releaseCd<10){X.strokeStyle=toneForIntent(d.kind)+'55';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.6+Math.sin(tick/3)*2,0,6.28);X.stroke();if(d.target>=0&&agents[d.target]&&agents[d.target].alive){X.setLineDash([2,4]);X.strokeStyle=toneForIntent(d.kind)+'66';X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(agents[d.target].x*CL+CL/2,agents[d.target].y*CL+CL/2);X.stroke();X.setLineDash([])}}
+    if(investors.some(inv=>inv.shares[idx]>0.05)){X.strokeStyle='#ffd70033';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.1,0,6.28);X.stroke();}
+    X.shadowColor=c.col;X.shadowBlur=16;X.fillStyle=c.col;X.fillRect(a.x*CL-1,a.y*CL-1,CL+2,CL+2);X.shadowBlur=0;
+    const dd=DIRS[a.dir];for(let g=1;g<=3;g++){X.fillStyle=`rgba(${c.cR},${0.12-g*0.03})`;X.fillRect((a.x+dd[0]*g)*CL,(a.y+dd[1]*g)*CL,CL,CL)}
+    const bw=14,bx=a.x*CL+CL/2-bw/2,by=a.y*CL-5;X.fillStyle='rgba(0,0,0,.55)';X.fillRect(bx,by,bw,2);X.fillStyle=a.hp>50?'#0d0':a.hp>25?'#f80':'#f00';X.fillRect(bx,by,bw*a.hp/100,2);
+    X.fillStyle=toneForIntent(d.kind);X.fillRect(a.x*CL,a.y*CL+CL+1,Math.max(2,CL*(a.releaseEvery-a.releaseCd)/a.releaseEvery),1.5);
+  });
+  for(let y=0;y<CV.height;y+=3){X.fillStyle='rgba(0,0,0,.035)';X.fillRect(0,y,CV.width,1)}
+}
+
+function decayDrops(){
+  for(let i=drops.length-1;i>=0;i--){drops[i].ttl--;if(drops[i].ttl<=0){const d=drops[i];if(d.by>=0&&brains[d.by]){if(d.type==='food')brains[d.by].w[3]=clamp(brains[d.by].w[3]-0.004,0.02,0.98);else brains[d.by].w[4]=clamp(brains[d.by].w[4]-0.004,0.02,0.98)}drops.splice(i,1)}}
+}
+
+function initArena(){
+  drops=[];events=[];tradeLog=[];tick=0;roundNo=1;generation=1;
+  market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name}));
+  initInvestors();
+  const starts=[[15,20],[GW-16,20],[15,GH-21],[GW-16,GH-21],[GW/2|0,12],[GW/2|0,GH-13]];
+  agents=CFG.map((c,i)=>new Agent(i,starts[i][0],starts[i][1],1));brains.forEach(b=>{b.phil=getPhil(b.w)});document.getElementById('podium').innerHTML='';syncModeUI();updatePortfolioStats();
+}
+
+function gameStep(){
+  if(!gameRunning||paused)return;
+  const alive=agents.filter(a=>a.alive);alive.forEach(a=>a.think(alive));decayDrops();tick++;maybeAdvanceRound();
+  if(tick%beatIntervalTicks()===0)beatAudioStep();
+  if(tick%MARKET_UPDATE_EVERY===0)updateMarketPrices();
+  if(tick%AI_REBALANCE_EVERY===0)rebalanceAI();
+  if(tick%HISTORY_EVERY===0)updatePortfolioStats();
+  draw();
+  if(tick%3===0)renderCards();
+  if(tick%18===0)renderAllPanels();
+}
+function loop(){if(!gameRunning)return;gameStep();if(speed<=1)requestAnimationFrame(loop);else setTimeout(()=>requestAnimationFrame(loop),speed)}
+function beginArena(){document.getElementById('start-ov').classList.add('hidden');resumeAudio();bellAudio();initArena();gameRunning=true;paused=false;syncPauseUI();renderAllPanels();loop();}
+
+document.getElementById('agent-cards').addEventListener('pointerdown',function(ev){
+  const btn=ev.target.closest('[data-trade]');
+  if(!btn)return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const stockId=parseInt(btn.dataset.stock,10);
+  if(Number.isNaN(stockId))return;
+  if(btn.dataset.trade==='buy')buyAlloc(stockId);
+  else sellAlloc(stockId);
+});
+
+const snips=['buy leaders sell panic','wins anchor valuation','food bias lowers volatility','poison spikes momentum','rotate on live rank drift','AI hunts underpriced frontrunners','pause and rebalance anytime','mean reversion caps mania','hot-seat lets two humans duel','market reads the brain'];
+setInterval(()=>{document.getElementById('ticker').textContent=Array.from({length:12},()=>snips[Math.floor(Math.random()*snips.length)]).join('  ·  ')},2800);
+setTradeStep(0.05);
+setMode('ai');
+syncAudioUI();
+</script>
+</body>
+</html>
