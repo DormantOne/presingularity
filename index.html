@@ -1,13 +1,12 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Code Arena — Market Duels</title>
+<title>Code Arena — Strategy Wheel Duels</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#06060e;--panel:#090914;--line:#1a1a2e;--muted:#556;--gold:#ffd700;--good:#18d26e;--bad:#ff5252}
+:root{--bg:#06060e;--panel:#090914;--line:#1a1a2e;--muted:#556;--gold:#ffd700;--good:#18d26e;--bad:#ff5252;--blue:#9fd0ff}
 body{background:radial-gradient(circle at top,#0b0b18 0%,#06060e 55%,#030309 100%);color:#fff;font-family:'Courier New',monospace;overflow:hidden;height:100vh;display:flex;flex-direction:column}
 #top{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:rgba(0,0,0,.82);border-bottom:1px solid var(--line);z-index:10;backdrop-filter:blur(6px)}
 #top h1{font-size:11px;letter-spacing:5px;color:#7b82b5}
@@ -17,29 +16,32 @@ body{background:radial-gradient(circle at top,#0b0b18 0%,#06060e 55%,#030309 100
 #left{width:300px;min-width:300px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65));border-right:1px solid var(--line);overflow-y:auto;padding:0;font-size:10px}
 #arena-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 canvas{border:1px solid var(--line);border-radius:4px;box-shadow:0 0 60px rgba(0,0,0,.45)}
-#right{width:310px;min-width:310px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65));border-left:1px solid var(--line);overflow-y:auto;padding:6px;font-size:10px}
+#right{width:330px;min-width:330px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65));border-left:1px solid var(--line);overflow-y:auto;padding:6px;font-size:10px}
 #bottom{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;background:rgba(0,0,0,.82);border-top:1px solid var(--line);font-size:9px;color:#52607b;z-index:10}
-button{font-family:inherit}
+button,select{font-family:inherit}
+button{padding:3px 9px;background:rgba(0,0,0,.62);border:1px solid #23233b;color:#93a0d5;font-size:9px;cursor:pointer;border-radius:4px}
+button:hover,select:hover{border-color:#4d5d8a}
+button.sel,.small-btn.sel{border-color:#ffd700;color:#ffd700}
+button.go-main{padding:8px 14px;border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.06)}
+button.go-main:hover{background:rgba(255,215,0,.12)}
+select{width:100%;padding:5px 7px;background:#0c0c18;border:1px solid #222842;color:#c6cff5;border-radius:4px;font-size:9px}
 .panel-title{font-size:10px;letter-spacing:2px;color:#7c85b2;margin-bottom:4px;text-align:center;padding:4px;border-bottom:1px solid #111}
-.market-board,.portfolio-card,.brain-row-panel,.phil-row{margin-bottom:8px;padding:7px;border:1px solid #17172d;border-radius:6px;background:rgba(255,255,255,.018)}
-.market-board .row,.portfolio-card .row,.tx-row,.lb-row{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.market-board .row{font-size:9px;color:#93a0d5;margin:2px 0}
+.market-board,.portfolio-card,.brain-row-panel,.phil-row,.wheel-wrap,.round-row{margin-bottom:8px;padding:7px;border:1px solid #17172d;border-radius:6px;background:rgba(255,255,255,.018)}
+.market-board .row,.portfolio-card .row,.lb-row,.wheel-row,.round-row .row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.market-board .row,.portfolio-card .row,.wheel-row,.round-row .row{font-size:9px;color:#93a0d5;margin:2px 0}
 .market-board .meter{height:6px;background:#0b0b14;border-radius:999px;overflow:hidden;border:1px solid #1c1c2f;margin:6px 0}
 .market-board .fill{height:100%;background:linear-gradient(90deg,#ffd700,#ff8c2b);width:0%}
-.market-board .mode-btns{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
-.market-board button,.trade-step button,#speed-ctrl button,.small-btn{padding:2px 8px;background:rgba(0,0,0,.6);border:1px solid #222;color:#8892bd;font-size:9px;cursor:pointer;border-radius:3px}
-.market-board button.sel,.trade-step button.sel,#speed-ctrl button.sel,.small-btn.sel{border-color:#ffd700;color:#ffd700}
 #accent{color:#ffd76a}
 .chart-wrap{padding:6px;border:1px solid #18182f;border-radius:6px;background:rgba(255,255,255,.015);margin-bottom:8px}
-#portfolioC{width:100%;height:150px;background:#07070f;border-radius:4px}
+#portfolioC,#allocC{width:100%;background:#07070f;border-radius:4px}
+#allocC{height:286px;cursor:crosshair}
 .lb-row{padding:4px 2px;border-bottom:1px solid #0a0a14;font-size:10px}
 .lb-row .r{color:#ffd700;font-size:9px;width:18px}
 .lb-meta{color:#7882a9;font-size:8px}
 .phil-name,.brain-name{font-size:10px;font-weight:bold;letter-spacing:1px;margin-bottom:2px}
 .phil-text,.brain-text{font-size:8px;color:#8893c5;font-style:italic;line-height:1.45}
 .phil-traits,.brain-micro{font-size:8px;color:#5c688e;margin-top:3px}
-.tx-row{font-size:9px;padding:3px 0;color:#7180ae;border-bottom:1px solid #08080f}
-.tx-row span:last-child{white-space:nowrap}
+.tx-row{font-size:9px;padding:3px 0;color:#7180ae;border-bottom:1px solid #08080f;display:flex;justify-content:space-between;gap:6px}
 #event-log{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:10;font-size:10px;pointer-events:none;text-align:center;max-width:min(70vw,700px)}
 .ev{animation:evfade 2.9s forwards;opacity:0}
 @keyframes evfade{0%{opacity:0;transform:translateY(8px) scale(.98)}12%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateY(-12px) scale(1.02)}}
@@ -48,17 +50,11 @@ button{font-family:inherit}
 #round-pulse{position:absolute;top:12px;left:12px;z-index:10;font-size:10px;color:#adb7e9;background:rgba(0,0,0,.45);padding:5px 8px;border-radius:12px;border:1px solid #17172a;backdrop-filter:blur(4px)}
 #trade-halt{position:absolute;top:46px;left:12px;z-index:10;font-size:10px;color:#ffd76a;background:rgba(28,18,0,.6);padding:5px 8px;border-radius:12px;border:1px solid rgba(255,215,0,.25);backdrop-filter:blur(4px);display:none}
 #trade-halt.show{display:block}
-#audio-chip{position:absolute;top:78px;left:12px;z-index:10;font-size:9px;color:#9fd0ff;background:rgba(0,0,0,.45);padding:5px 8px;border-radius:12px;border:1px solid #17172a;backdrop-filter:blur(4px);display:flex;align-items:center;gap:6px}
-#audio-led{width:7px;height:7px;border-radius:50%;background:#6ef6ac;box-shadow:0 0 8px rgba(110,246,172,.6)}
-#audio-led.off{background:#4a5068;box-shadow:none}
-#audio-chip button{padding:1px 6px;background:rgba(0,0,0,.35);border:1px solid #28314d;color:#9fd0ff;font-family:inherit;font-size:8px;border-radius:10px;cursor:pointer}
-#podium{position:absolute;left:12px;bottom:14px;z-index:10;font-size:10px;color:#e8ecff;pointer-events:none;max-width:240px}
+#podium{position:absolute;left:12px;bottom:14px;z-index:10;font-size:10px;color:#e8ecff;pointer-events:none;max-width:260px}
 #podium .card{margin-top:5px;padding:6px 8px;border:1px solid #1a1a2e;border-radius:6px;background:rgba(0,0,0,.55);box-shadow:0 8px 28px rgba(0,0,0,.35)}
 #acq{color:#9fd0ff}
 #ticker{color:#3e8c64;overflow:hidden;flex:1;text-align:center;margin:0 12px;white-space:nowrap}
-.trade-step{display:flex;gap:3px;align-items:center;margin-left:8px}
-
-/* agent cards */
+.small-btn{padding:2px 8px}
 .ac{border-bottom:1px solid #121225;padding:7px 8px;position:relative;transition:background .2s,border-color .2s}
 .ac:hover{background:rgba(255,255,255,.025)}
 .ac.dead{opacity:.44;filter:saturate(.55)}
@@ -79,14 +75,11 @@ button{font-family:inherit}
 .hint-bars{display:flex;gap:3px;margin-top:4px}
 .hint-col{flex:1}
 .hint-lbl{font-size:7px;color:#5f698d;margin-bottom:1px;text-transform:uppercase;letter-spacing:.8px}
-.trade-area{display:flex;gap:4px;margin-top:5px;align-items:center;flex-wrap:wrap}
-.trade-btn{padding:2px 7px;border:1px solid #2f3d5f;border-radius:3px;background:rgba(100,150,255,.05);font-size:9px;color:#9fd0ff;cursor:pointer;transition:all .15s}
-.trade-btn:hover{border-color:#8ec5ff;color:#e7f5ff;background:rgba(100,150,255,.11)}
-.trade-btn.sell{border-color:#6b3946;background:rgba(255,90,115,.06);color:#ff9cb0}
-.trade-btn.sell:hover{border-color:#ff728d;color:#ffd2db;background:rgba(255,90,115,.12)}
+.exposure{display:flex;gap:4px;margin-top:5px;align-items:center;flex-wrap:wrap}
 .pill{padding:2px 5px;border:1px solid #2a2a42;border-radius:10px;font-size:8px;color:#9da7d8;background:#0e0e1c}
 .owner-pill{padding:2px 6px;border:1px solid #4b4212;border-radius:10px;background:rgba(255,215,0,.08);font-size:8px;color:#ffd76a}
 .owner-pill.rival{border-color:#27415d;background:rgba(80,170,255,.08);color:#9fd0ff}
+.signal-pill{padding:2px 6px;border:1px solid #3d3058;border-radius:10px;background:rgba(176,64,255,.08);font-size:8px;color:#d4b3ff}
 .ac .tt{display:none;position:absolute;left:calc(100% + 4px);top:0;background:#0a0a16;border:1px solid #2a2a4a;border-radius:6px;padding:8px 10px;width:235px;z-index:50;font-size:9px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.82)}
 .ac:hover .tt{display:block}
 .tt-title{font-size:10px;font-weight:bold;letter-spacing:1px;margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid #1a1a2e}
@@ -95,21 +88,28 @@ button{font-family:inherit}
 .tt-bar{height:3px;background:#111;border-radius:2px;margin:1px 0 3px;overflow:hidden}
 .tt-fill{height:100%;border-radius:2px}
 .tt-sec{margin-top:4px;padding-top:3px;border-top:1px solid #111;font-size:8px;color:#556;letter-spacing:1px}
-
+.wheel-wrap .legend{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.legend div{padding:4px 5px;border:1px solid #17172d;border-radius:4px;background:rgba(255,255,255,.015);font-size:8px;color:#8f99cd}
+.legend b{display:block;font-size:8px;letter-spacing:.8px;color:#d8e0ff;margin-bottom:1px}
+.strategy-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.strategy-chip{padding:6px;border:1px solid #1d2440;border-radius:5px;background:rgba(255,255,255,.02);cursor:pointer;font-size:8px;color:#94a3d4;line-height:1.35}
+.strategy-chip.sel{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.08)}
+.strategy-chip b{display:block;font-size:9px;letter-spacing:.8px;margin-bottom:2px}
+.phase-pill{padding:2px 6px;border-radius:10px;border:1px solid #2c2c48;background:#0d0d18;color:#b9c4f7;font-size:8px}
 #start-ov{position:fixed;inset:0;background:rgba(4,4,12,.94);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity .5s}
 #start-ov.hidden{opacity:0;pointer-events:none}
 #start-ov h1{font-size:24px;letter-spacing:8px;margin-bottom:6px;color:#eef2ff}
-#start-ov .sub{color:#8893c5;font-size:11px;max-width:670px;text-align:center;line-height:1.75;margin-bottom:20px;letter-spacing:1px}
+#start-ov .sub{color:#8893c5;font-size:11px;max-width:760px;text-align:center;line-height:1.75;margin-bottom:20px;letter-spacing:1px}
 #start-ov .go{padding:14px 50px;border:2px solid #ffd700;border-radius:8px;background:transparent;color:#ffd700;font-family:inherit;font-size:16px;letter-spacing:4px;cursor:pointer;transition:all .3s}
 #start-ov .go:hover{background:rgba(255,215,0,.1);box-shadow:0 0 40px rgba(255,215,0,.15)}
-#start-ov .feat{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:540px;margin-bottom:16px;font-size:10px;color:#8893c5;line-height:1.5}
+#start-ov .feat{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:620px;margin-bottom:16px;font-size:10px;color:#8893c5;line-height:1.5}
 #start-ov .feat div{padding:8px;border:1px solid #1a1a2e;border-radius:4px;background:rgba(0,0,0,.32)}
 #start-ov .feat div b{color:#d4daf8;display:block;margin-bottom:2px;letter-spacing:1px}
 #start-ov .modes{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}
 #start-ov .mode{padding:10px 18px;border:1px solid #27314e;border-radius:7px;background:rgba(255,255,255,.02);color:#8ca4db;cursor:pointer;font-size:11px;letter-spacing:1px}
 #start-ov .mode.sel{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.08)}
-
-@media (max-width:1300px){#left{width:280px;min-width:280px}#right{width:280px;min-width:280px}}
+.win-banner{margin-top:6px;padding:7px 8px;border-radius:6px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.05);color:#ffe18e;font-size:9px;line-height:1.55}
+@media (max-width:1360px){#left{width:280px;min-width:280px}#right{width:300px;min-width:300px}}
 </style>
 </head>
 <body>
@@ -120,7 +120,7 @@ button{font-family:inherit}
     <span class="top-stat">Δ: <span id="pnl" style="color:#667">0</span></span>
     <span class="top-stat">ROUND: <span id="round-no" style="color:#ffd76a">1</span></span>
   </div>
-  <h1>CODE ARENA MARKET</h1>
+  <h1>CODE ARENA STRATEGY WHEEL</h1>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
     <span class="top-stat" id="opponent-label">RIVAL NET: <span id="opp-worth" style="color:#9fd0ff">1000</span></span>
     <span class="top-stat">MODE: <span id="mode-chip" style="color:#c7cff7">YOU vs AI</span></span>
@@ -132,13 +132,13 @@ button{font-family:inherit}
   <div id="arena-wrap">
     <canvas id="c"></canvas>
     <div id="event-log"></div>
-    <div id="round-pulse">ROUND 1 · market open</div>
-    <div id="trade-halt">TRADING HALT · simulation paused for orders</div>
-    <div id="audio-chip"><span id="audio-led"></span><span id="audio-state">AUDIO ON</span><button onclick="toggleAudio()">TOGGLE</button></div>
+    <div id="round-pulse">SETUP · choose strategy and lock weights</div>
+    <div id="trade-halt">ALLOCATION LOCKED · round running</div>
     <div id="gen-badge"></div>
     <div id="podium"></div>
     <div id="speed-ctrl">
-      <button onclick="toggleRun()" id="pause-btn">PAUSE</button>
+      <button onclick="Sound.toggle()" id="mute-btn">♪ ON</button>
+      <button onclick="toggleRun()" id="pause-btn">RUN</button>
       SPD:
       <button onclick="setSpd(50)">1x</button>
       <button class="sel" onclick="setSpd(25)">2x</button>
@@ -148,48 +148,52 @@ button{font-family:inherit}
   </div>
   <div id="right">
     <div id="market-board" class="market-board"></div>
+    <div class="wheel-wrap">
+      <div class="panel-title" style="margin:-2px -2px 6px -2px;border-bottom-color:#16162b">ALLOCATION WHEEL</div>
+      <canvas id="allocC" width="286" height="286"></canvas>
+      <div class="wheel-row"><span>active investor</span><span id="wheel-investor" style="color:#ffd76a">YOU</span></div>
+      <div class="wheel-row"><span>strategy</span><span id="wheel-strategy" style="color:#d9c1ff">MANUAL WHEEL</span></div>
+      <div class="wheel-row"><span>cash reserve</span><span id="wheel-cash">100%</span></div>
+      <div class="wheel-row"><span>center halo</span><span id="wheel-halo">1000★</span></div>
+      <div class="legend" id="wheel-legend"></div>
+    </div>
     <div class="chart-wrap">
       <div class="panel-title" style="margin:-2px -2px 6px -2px;border-bottom-color:#16162b">NET WORTH</div>
-      <canvas id="portfolioC" width="286" height="150"></canvas>
+      <canvas id="portfolioC" width="306" height="150"></canvas>
     </div>
     <div class="panel-title">PORTFOLIOS</div>
     <div id="portfolio-panels"></div>
+    <div class="panel-title">ROUND LOG</div>
+    <div id="tx-log"></div>
     <div class="panel-title">MARKET LEADERBOARD</div>
     <div id="lb"></div>
     <div class="panel-title">BRAIN TELLS</div>
     <div id="brain-list"></div>
     <div class="panel-title">PHILOSOPHIES</div>
     <div id="phil-list"></div>
-    <div class="panel-title">TRADE LOG</div>
-    <div id="tx-log"></div>
   </div>
 </div>
 <div id="bottom">
   <span id="tick-ct">TICK 0</span>
   <span id="ticker"></span>
   <span style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-    <span>TRADE SIZE</span>
-    <span class="trade-step">
-      <button class="bsz sel" data-v="0.05" onclick="setTradeStep(0.05)">5%</button>
-      <button class="bsz" data-v="0.10" onclick="setTradeStep(0.10)">10%</button>
-      <button class="bsz" data-v="0.20" onclick="setTradeStep(0.20)">20%</button>
-    </span>
-    <button class="small-btn" id="switch-btn" onclick="switchTrader()" style="display:none">SWITCH TRADER</button>
+    <span class="phase-pill" id="phase-chip">SETUP PHASE</span>
+    <button class="small-btn" id="switch-btn" onclick="switchTrader()" style="display:none">SWITCH INVESTOR</button>
   </span>
 </div>
 
 <div id="start-ov">
-  <h1>CODE ARENA MARKET</h1>
-  <div class="sub">Each arena mind is now a tradable stock. Price is anchored to long-run wins but moves every few beats on recent form, live score, survival, and behavioral signals. You can pause, buy, sell, and rebalance at any moment while a rival investor — either a second person or a computer — fights you on net worth.</div>
+  <h1>CODE ARENA STRATEGY WHEEL</h1>
+  <div class="sub">Each arena mind remains a tradable entity, but the investment game is now allocation-first. Each side chooses a strategy doctrine, manual players shape exposures on a six-spoke wheel with cash at the center, then both portfolios lock for a 1000-tick round. First to 5× starting capital — or first to at least double the rival — wins.</div>
   <div class="modes">
     <button class="mode sel" id="mode-ai" onclick="setMode('ai')">YOU vs AI</button>
     <button class="mode" id="mode-pvp" onclick="setMode('pvp')">2 PLAYER HOT SEAT</button>
   </div>
   <div class="feat">
-    <div><b>LIVE INVESTING</b>Every agent has a stock price. Buy more, trim, rotate, or hold cash while the arena evolves.</div>
-    <div><b>BALANCED PRICING</b>Prices lean hard on wins, but live score only nudges them. Mean reversion keeps one winner from breaking the market.</div>
-    <div><b>READ THE BRAIN</b>Cards expose intent, pulse timer, trust, drives, rank, and momentum so you can invest off tells rather than luck.</div>
-    <div><b>HEAD-TO-HEAD</b>Play against the computer or switch between two human portfolios on the same screen.</div>
+    <div><b>STRATEGY DOCTRINES</b>Momentum, Contrarian, Philosopher, Alliance Reader, and Cash Stoic all read the arena differently — and each doctrine learns from what worked.</div>
+    <div><b>ALLOCATION WHEEL</b>Manual players drag six spokes and the central cash core to set a full portfolio posture instead of hammering buy and sell buttons.</div>
+    <div><b>LOCKED ROUNDS</b>Once both sides commit, the market runs for 1000 ticks with no mid-round edits. You live with your thesis.</div>
+    <div><b>VICTORY RACE</b>Beat the rival to 5000★ or surge to at least 2× their net worth to end the duel instantly.</div>
   </div>
   <button class="go" onclick="beginArena()">ENTER MARKET</button>
 </div>
@@ -197,16 +201,17 @@ button{font-family:inherit}
 <script>
 const CV=document.getElementById('c'),X=CV.getContext('2d');
 const PC=document.getElementById('portfolioC'),PX=PC.getContext('2d');
+const AC=document.getElementById('allocC'),AX=AC.getContext('2d');
 const GW=130,GH=85,CL=6;
 CV.width=GW*CL;CV.height=GH*CL;
 const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
-let speed=25,gameRunning=false,paused=false,tick=0,generation=1,roundNo=1;
-let agents=[],drops=[],events=[],tradeLog=[];
-let selectedMode='ai',activeTrader=0,tradeStep=0.05;
-const ROUND_LEN=1100;
+let speed=25,gameRunning=false,paused=true,tick=0,generation=1,roundNo=1;
+let agents=[],drops=[],events=[],roundLog=[];
+let selectedMode='ai',activeTrader=0;
+const ROUND_LEN=1000;
 const MARKET_UPDATE_EVERY=12;
-const AI_REBALANCE_EVERY=55;
 const HISTORY_EVERY=14;
+const TARGET_NET=5000;
 const CFG=[
   {name:'NEXUS',col:'#00e8ff',cR:'0,232,255',cD:'rgba(0,100,140,'},
   {name:'CIPHER',col:'#ff2070',cR:'255,32,112',cD:'rgba(140,15,50,'},
@@ -215,6 +220,18 @@ const CFG=[
   {name:'AXIOM',col:'#b040ff',cR:'176,64,255',cD:'rgba(80,20,140,'},
   {name:'SPECTRE',col:'#ffee00',cR:'255,238,0',cD:'rgba(140,130,0,'}
 ];
+const STRATEGIES=[
+  {id:'manual',name:'MANUAL WHEEL',desc:'Human-set posture. Drag spokes and center cash directly.'},
+  {id:'momentum',name:'MOMENTUM HUNTER',desc:'Leans into leaders, price acceleration, and strong live score.'},
+  {id:'contrarian',name:'CONTRARIAN',desc:'Buys discounted strength and sells crowd panic or euphoria.'},
+  {id:'philosopher',name:'PHILOSOPHER',desc:'Trusts durable behavioral archetypes over short-term spikes.'},
+  {id:'alliance',name:'ALLIANCE READER',desc:'Follows trust networks, feeding loops, and coalition resilience.'},
+  {id:'stoic',name:'CASH STOIC',desc:'Keeps reserve, avoids frenzy, and concentrates only when conviction is high.'}
+];
+let phase='setup';
+let setupCursor=0;
+let winnerText='';
+let wheelDrag={type:null,index:-1};
 let LB=CFG.map((_,i)=>({id:i,wins:0,kills:0,feeds:0,poisonsLaid:0,totalSurv:0,gens:1,roundScore:0,lastRank:6}));
 const PHILS=[
   {name:'ALTRUIST',test:w=>w[3]>0.65&&w[0]>0.5,desc:'Believes survival comes through giving. Feeds allies, avoids conflict.'},
@@ -228,14 +245,10 @@ const PHILS=[
   {name:'PRAGMATIST',test:w=>{const mx=Math.max(...w)-Math.min(...w);return mx<0.25},desc:'No ideology. Pure adaptation to whatever works now.'},
 ];
 function getPhil(w){for(const p of PHILS)if(p.test(w))return p;return{name:'EMERGENT',desc:'A philosophy not yet named. Drifting between worldviews.'}}
-let brains=CFG.map(()=>({
-  w:[0.52,0.48,0.52,0.50,0.49,0.50],
-  bias:[0,0,0,0,0,0],
-  trust:new Float32Array(6).fill(0.18),
-  phil:null,philHist:[],
-  lastDecision:{kind:'SCOUT',food:0.5,poison:0.5,target:-1,confidence:0.5,why:'scanning',ctx:{}},
-}));
-let market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name}));
+let brains=CFG.map(()=>(
+  {w:[0.52,0.48,0.52,0.50,0.49,0.50],bias:[0,0,0,0,0,0],trust:new Float32Array(6).fill(0.18),phil:null,philHist:[],lastDecision:{kind:'SCOUT',food:0.5,poison:0.5,target:-1,confidence:0.5,why:'scanning',ctx:{}}}
+));
+let market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name,roundEntry:100}));
 let investors=[];
 
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
@@ -244,10 +257,10 @@ function dist(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)}
 function inBounds(x,y){return x>=0&&x<GW&&y>=0&&y<GH}
 function occupantAt(x,y,ignore=-1){for(const a of agents){if(!a.alive||a.id===ignore)continue;if(a.x===x&&a.y===y)return a}return null}
 function roundTick(){return tick-((roundNo-1)*ROUND_LEN)}
-function roundProgress(){return roundTick()/ROUND_LEN}
 function fmtPct(v){return Math.round(v*100)+'%'}
 function wLabel(i){return['food-seek','fuel-conserve','aggression','altruism','poison-craft','solitude'][i]}
 function toneForIntent(kind){return kind==='POISON'?'#ff6b7f':kind==='FOOD'?'#7bffb6':'#a3b0e6'}
+function normalizeWeights(arr){const clean=arr.map(v=>Math.max(0,v));const sum=clean.reduce((s,v)=>s+v,0)||1;return clean.map(v=>v/sum)}
 function dominantTags(a){
   const picks=a.brain.w.map((v,i)=>({i,v})).sort((m,n)=>n.v-m.v).slice(0,2);
   return picks.map(p=>wLabel(p.i).replace('fuel-','').replace('poison-','poison ').replace('food-','food ').replace('seek','')).map(t=>t.trim().toUpperCase());
@@ -255,179 +268,277 @@ function dominantTags(a){
 function investorNetWorth(inv){return inv.cash+inv.shares.reduce((s,sh,i)=>s+sh*market[i].price,0)}
 function holdingValue(inv,i){return inv.shares[i]*market[i].price}
 function allocation(inv,i){const nw=investorNetWorth(inv);return nw>0?holdingValue(inv,i)/nw:0}
+function currentPortfolioWeights(inv){
+  const nw=investorNetWorth(inv);
+  if(nw<=0)return [...Array(CFG.length).fill(0),1];
+  return [...CFG.map((_,i)=>holdingValue(inv,i)/nw), clamp(inv.cash/nw,0,1)];
+}
+function displayWeightsFor(inv,idx){
+  if(phase==='setup')return isManual(inv)?manualWeights(inv):computeStrategyWeights(idx);
+  return currentPortfolioWeights(inv);
+}
 function percentChange(i){const m=market[i];return m.prev?((m.price-m.prev)/m.prev):0}
 function activeInvestor(){return investors[activeTrader]}
 function marketLeader(){return investors[0].netWorth>=investors[1].netWorth?0:1}
+function strategyMeta(id){return STRATEGIES.find(s=>s.id===id)||STRATEGIES[0]}
+function isManual(inv){return inv.strategyId==='manual'}
+function currentSetupInvestor(){return investors[setupCursor]||investors[0]}
+function marketIndexAtHistory(idx){return 1000*(market.reduce((s,m)=>s+(m.hist[idx]||m.price),0)/CFG.length)/100}
 
+/* ═══════════════════════════════════════════════════════
+   GENERATIVE SOUND ENGINE
+   A persistent rhythmic bed modulated by arena state.
+   D Dorian · 84 BPM · kick/hat/bass/arp/pad
+   Five reactive parameters nudged by events, smoothly
+   decaying — reshaping filter, delay, reverb, distortion.
+   ═══════════════════════════════════════════════════════ */
+const Sound={
+  ctx:null,master:null,comp:null,revGain:null,dlyFb:null,
+  padGain:null,padFilter:null,padOscs:[],_noiseBuf:null,
+  mfilt:null,distNode:null,dlyNode:null,
+  bpm:84,step:0,nextStep:0,_16th:0,muted:false,on:false,_tid:0,_fc:0,
+  /* reactive parameters — current (p) and target (t) */
+  p:{int:0.12,vol:0.18,warm:0.5,dark:0.18,mom:0.5},
+  t:{int:0.12,vol:0.18,warm:0.5,dark:0.18,mom:0.5},
+  /* D dorian octave 4 — one note per agent */
+  arpNotes:[293.66,329.63,349.23,392.00,440.00,493.88],
+  /* bass notes D2 E2 F2 G2 */
+  bassN:[73.42,82.41,87.31,98.0],
+  /* step patterns (16th notes, 1 bar) */
+  kP:[1,0,0,0, 0,0,.55,0, .9,0,0,0, 0,0,0,0],
+  hP:[0,0,.35,0, 0,0,.55,0, 0,0,.35,0, 0,.25,.65,0],
+  bP:[1,0,0,0, 0,0,.9,0, .75,0,0,0, 0,0,.5,0],
 
-const audioState={
-  ctx:null,master:null,music:null,comp:null,enabled:true,started:false,
-  lastMove:Array(CFG.length).fill(-999),lastPrice:Array(CFG.length).fill(100),deathHits:[],vol:0.16,
-  lastBeat:-999,beatStep:0,lastBar:-999,
-  warp:{food:0,poison:0,death:0,alliance:0,trade:0}
+  init(){
+    if(this.on)return;
+    this.ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+    if(this.ctx.state==='suspended')this.ctx.resume();
+    this.on=true;this._16th=60/this.bpm/4;
+    /* master chain */
+    this.master=this.ctx.createGain();this.master.gain.value=0.30;
+    this.comp=this.ctx.createDynamicsCompressor();
+    this.comp.threshold.value=-20;this.comp.ratio.value=4;this.comp.attack.value=0.003;this.comp.release.value=0.15;
+    this.mfilt=this.ctx.createBiquadFilter();this.mfilt.type='lowpass';this.mfilt.frequency.value=7500;this.mfilt.Q.value=0.7;
+    this.distNode=this.ctx.createWaveShaper();this.distNode.curve=this._mkCurve(0.25);this.distNode.oversample='2x';
+    /* delay — dotted eighth */
+    this.dlyNode=this.ctx.createDelay(1.0);this.dlyNode.delayTime.value=this._16th*3;
+    this.dlyFb=this.ctx.createGain();this.dlyFb.gain.value=0.16;
+    const dlyF=this.ctx.createBiquadFilter();dlyF.type='lowpass';dlyF.frequency.value=2000;
+    /* reverb — synthetic IR */
+    const rev=this.ctx.createConvolver();rev.buffer=this._mkIR(2.6,3.0);
+    this.revGain=this.ctx.createGain();this.revGain.gain.value=0.14;
+    /* routing: source → dist → mfilt → comp → master → out */
+    this.distNode.connect(this.mfilt);this.mfilt.connect(this.comp);this.comp.connect(this.master);this.master.connect(this.ctx.destination);
+    /* delay send */
+    this.distNode.connect(this.dlyNode);this.dlyNode.connect(dlyF);dlyF.connect(this.dlyFb);this.dlyFb.connect(this.dlyNode);dlyF.connect(this.comp);
+    /* reverb send */
+    this.distNode.connect(rev);rev.connect(this.revGain);this.revGain.connect(this.comp);
+    /* pre-bake noise buffer for hats */
+    this._mkNoise();
+    /* always-on pad drone */
+    this._initPad();
+    /* start lookahead scheduler */
+    this.nextStep=this.ctx.currentTime+0.15;this.step=0;
+    this._tid=setInterval(()=>this._sched(),25);
+  },
+
+  _mkCurve(k){const n=256,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(Math.PI+k)*x/(Math.PI+k*Math.abs(x))}return c},
+  _mkIR(dur,dec){const sr=this.ctx.sampleRate,l=sr*dur|0,b=this.ctx.createBuffer(2,l,sr);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<l;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/l,dec)}return b},
+  _mkNoise(){const l=this.ctx.sampleRate/5|0;this._noiseBuf=this.ctx.createBuffer(1,l,this.ctx.sampleRate);const d=this._noiseBuf.getChannelData(0);for(let i=0;i<l;i++)d[i]=Math.random()*2-1},
+
+  _initPad(){
+    this.padGain=this.ctx.createGain();this.padGain.gain.value=0.03;
+    this.padFilter=this.ctx.createBiquadFilter();this.padFilter.type='lowpass';this.padFilter.frequency.value=650;this.padFilter.Q.value=2.2;
+    /* D2 + A2 + D3 — open fifth drone */
+    [73.42,110.0,146.83].forEach(f=>{
+      const o=this.ctx.createOscillator();o.type='sawtooth';o.frequency.value=f;
+      o.detune.value=(Math.random()-0.5)*7;
+      o.connect(this.padFilter);o.start();this.padOscs.push(o);
+    });
+    this.padFilter.connect(this.padGain);this.padGain.connect(this.distNode);
+  },
+
+  /* ---- lookahead scheduler (runs every 25 ms) ---- */
+  _sched(){
+    if(!this.on)return;
+    this._smooth();
+    if(this.muted)return;
+    const ahead=0.12;
+    while(this.nextStep<this.ctx.currentTime+ahead){
+      this._playStep(this.step,this.nextStep);
+      this.nextStep+=this._16th;
+      this.step=(this.step+1)%16;
+    }
+  },
+
+  /* smooth params toward targets + update audio nodes */
+  _smooth(){
+    const r=0.038,p=this.p,t=this.t;
+    p.int+=(t.int-p.int)*r; p.vol+=(t.vol-p.vol)*r;
+    p.warm+=(t.warm-p.warm)*r; p.dark+=(t.dark-p.dark)*r;
+    p.mom+=(t.mom-p.mom)*r;
+    /* natural decay of targets toward baseline */
+    t.dark=t.dark*0.9975+0.18*0.0025;
+    t.warm=t.warm*0.998+0.5*0.002;
+    t.vol=t.vol*0.9975+0.18*0.0025;
+    t.int=t.int*0.999+0.12*0.001;
+    const ct=this.ctx.currentTime+0.12;
+    if(this.padFilter)this.padFilter.frequency.linearRampToValueAtTime(
+      420+p.warm*480+p.int*320-p.dark*160, ct);
+    if(this.padGain)this.padGain.gain.linearRampToValueAtTime(
+      0.015+p.int*0.03+p.dark*0.012, ct);
+    if(this.mfilt)this.mfilt.frequency.linearRampToValueAtTime(
+      2500+p.warm*4200+p.int*2200-p.dark*1100, ct);
+    if(this.dlyFb)this.dlyFb.gain.linearRampToValueAtTime(
+      0.08+p.vol*0.34, ct);
+    if(this.revGain)this.revGain.gain.linearRampToValueAtTime(
+      0.07+p.dark*0.13+(1-p.int)*0.07, ct);
+    /* update pad detune for dissonance every ~30 frames */
+    this._fc++;
+    if(this._fc%30===0&&this.padOscs.length){
+      this.padOscs.forEach((o,i)=>o.detune.linearRampToValueAtTime(
+        (Math.random()-0.5)*4+p.dark*(i===1?-18:10), ct+0.3));
+    }
+  },
+
+  /* ---- step player ---- */
+  _playStep(s,t){
+    const p=this.p, run=phase==='run'&&!paused, bv=run?0.4+p.int*0.6:0.15;
+    if(this.kP[s]>0) this._kick(t, this.kP[s]*bv*(0.65+p.int*0.35));
+    if(this.hP[s]>0) this._hat(t, this.hP[s]*bv*0.42, s%4===2);
+    if(this.bP[s]>0){
+      let bi=0;try{if(typeof liveRankings==='function'&&agents.length)bi=liveRankings()[0].id%4}catch(e){}
+      this._bass(t, this.bassN[bi], this._16th*1.8, this.bP[s]*bv*0.5);
+    }
+    if(run&&s%2===0) this._arp(t,s);
+  },
+
+  /* ---- instruments ---- */
+  _kick(t,v){
+    const c=this.ctx,o=c.createOscillator(),g=c.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(135*(1+this.p.dark*0.28),t);
+    o.frequency.exponentialRampToValueAtTime(32,t+0.085);
+    g.gain.setValueAtTime(v*0.6,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.26);
+    o.connect(g);g.connect(this.distNode);o.start(t);o.stop(t+0.27);
+  },
+
+  _hat(t,v,open){
+    const c=this.ctx,s=c.createBufferSource();s.buffer=this._noiseBuf;
+    const g=c.createGain(),f=c.createBiquadFilter();
+    f.type='highpass';f.frequency.value=6200+this.p.warm*2800;
+    const dur=open?0.085:0.032;
+    g.gain.setValueAtTime(v*0.11,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    s.connect(f);f.connect(g);g.connect(this.distNode);s.start(t);s.stop(t+dur+0.01);
+  },
+
+  _bass(t,freq,dur,v){
+    const c=this.ctx,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();
+    o.type='square';o.frequency.value=freq;
+    o.detune.setValueAtTime(this.p.vol*12,t);
+    f.type='lowpass';f.frequency.value=260+this.p.warm*350+this.p.int*160;
+    f.Q.value=2.2+this.p.vol*4.5;
+    g.gain.setValueAtTime(v*0.2,t);
+    g.gain.setValueAtTime(v*0.16,t+dur*0.7);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(f);f.connect(g);g.connect(this.distNode);o.start(t);o.stop(t+dur+0.01);
+  },
+
+  _arp(t,s){
+    if(!agents||!agents.length)return;
+    const idx=Math.floor((s/2)%agents.length);
+    const a=agents[idx];if(!a)return;
+    const alive=a.alive, v=alive?clamp(a.hp/100,0.1,0.55):0.03;
+    const freq=this.arpNotes[a.id]*(alive?1:0.984);
+    const c=this.ctx,o=c.createOscillator(),g=c.createGain();
+    const f=c.createBiquadFilter(),pan=c.createStereoPanner();
+    o.type='triangle';o.frequency.value=freq*(1+(alive?0:this.p.dark*0.018));
+    /* octave jump on high-energy agents */
+    if(alive&&a.energy>240&&Math.random()<0.3)o.frequency.value=freq*2;
+    f.type='lowpass';f.frequency.value=900+(alive?a.energy:0)*3.2+this.p.warm*650;f.Q.value=1.3;
+    const dur=this._16th*1.35;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(v*0.09*(0.35+this.p.int*0.65),t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    pan.pan.value=alive?clamp((a.x/GW)*2-1,-0.6,0.6):0;
+    o.connect(f);f.connect(g);g.connect(pan);pan.connect(this.distNode);
+    o.start(t);o.stop(t+dur+0.01);
+  },
+
+  /* ---- textural accents (very quiet, blended into chain) ---- */
+  _deathTone(){
+    if(!this.on||this.muted)return;
+    const c=this.ctx,t=c.currentTime,o=c.createOscillator(),g=c.createGain();
+    o.type='sine';o.frequency.setValueAtTime(380,t);
+    o.frequency.exponentialRampToValueAtTime(48,t+0.65);
+    g.gain.setValueAtTime(0.055,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+    o.connect(g);g.connect(this.distNode);o.start(t);o.stop(t+0.72);
+  },
+  _allianceChime(){
+    if(!this.on||this.muted)return;
+    const c=this.ctx,t=c.currentTime;
+    [440,554.37,659.25].forEach((f,i)=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.type='sine';o.frequency.value=f;
+      const at=t+i*0.055;
+      g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.032,at+0.015);
+      g.gain.exponentialRampToValueAtTime(0.001,at+0.45);
+      o.connect(g);g.connect(this.distNode);o.start(t);o.stop(at+0.47);
+    });
+  },
+  _roundLockThump(){
+    if(!this.on||this.muted)return;
+    const c=this.ctx,t=c.currentTime;
+    const o=c.createOscillator(),g=c.createGain();
+    o.type='sine';o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(28,t+0.18);
+    g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
+    o.connect(g);g.connect(this.distNode);o.start(t);o.stop(t+0.47);
+  },
+
+  /* ---- event nudges (shift targets, never play isolated sounds) ---- */
+  nudge(type){
+    const t=this.t;
+    switch(type){
+      case'kill':t.dark=Math.min(1,t.dark+0.2);t.int=Math.min(1,t.int+0.07);this._deathTone();break;
+      case'food':t.warm=Math.min(1,t.warm+0.06);break;
+      case'poison':t.dark=Math.min(1,t.dark+0.045);t.vol=Math.min(1,t.vol+0.035);break;
+      case'alliance':t.warm=Math.min(1,t.warm+0.09);t.dark=Math.max(0,t.dark-0.03);this._allianceChime();break;
+      case'roundStart':t.int=0.42;t.vol=0.2;this._roundLockThump();break;
+      case'setup':t.int=0.1;t.vol=0.12;break;
+      case'nearWin':t.int=Math.min(1,t.int+0.1);t.vol=Math.min(1,t.vol+0.06);break;
+      case'respawn':t.warm=Math.min(1,t.warm+0.04);break;
+    }
+  },
+
+  /* called from gameStep — reads live game state into targets */
+  gameUpdate(){
+    if(!this.on)return;
+    try{
+      if(market&&market.length){
+        const sp=Math.max(...market.map((_,i)=>Math.abs(percentChange(i))));
+        this.t.vol=clamp(this.t.vol+sp*0.35,0,1);
+        const avgMom=market.reduce((s,m)=>s+m.momentum,0)/market.length;
+        this.t.mom=clamp(0.5+avgMom*8,0,1);
+      }
+      if(investors&&investors.length>=2){
+        const mx=Math.max(investors[0].netWorth,investors[1].netWorth);
+        if(mx>TARGET_NET*0.7)this.nudge('nearWin');
+      }
+    }catch(e){}
+  },
+
+  toggle(){
+    this.muted=!this.muted;
+    const ct=this.ctx?this.ctx.currentTime+0.1:0;
+    if(this.master)this.master.gain.linearRampToValueAtTime(this.muted?0:0.30,ct);
+    if(this.padGain)this.padGain.gain.linearRampToValueAtTime(this.muted?0:0.025,ct);
+    document.getElementById('mute-btn').textContent=this.muted?'♪ OFF':'♪ ON';
+    document.getElementById('mute-btn').classList.toggle('sel',!this.muted);
+  }
 };
-function ensureAudio(){
-  if(audioState.ctx)return audioState.ctx;
-  const C=window.AudioContext||window.webkitAudioContext;
-  if(!C)return null;
-  const ctx=new C();
-  const master=ctx.createGain(), music=ctx.createGain(), comp=ctx.createDynamicsCompressor();
-  master.gain.value=audioState.vol; music.gain.value=0.92;
-  comp.threshold.value=-22; comp.knee.value=26; comp.ratio.value=2.0; comp.attack.value=0.025; comp.release.value=0.28;
-  music.connect(comp); comp.connect(master); master.connect(ctx.destination);
-  audioState.ctx=ctx; audioState.master=master; audioState.music=music; audioState.comp=comp; audioState.started=true;
-  syncAudioUI();
-  return ctx;
-}
-function resumeAudio(){const ctx=ensureAudio();if(ctx&&ctx.state==='suspended')ctx.resume();}
-function panForX(x){return clamp((x/(GW-1))*2-1,-1,1)}
-function beatIntervalTicks(){return speed<=1?4:(speed<=8?6:(speed<=25?9:12));}
-function bumpWarp(kind,amt){if(audioState.warp[kind]===undefined)return;audioState.warp[kind]=clamp(audioState.warp[kind]+amt,0,1.4);}
-function decayWarps(){for(const k in audioState.warp)audioState.warp[k]*=0.87;}
-function beatBase(){
-  const leader=[...agents].sort((a,b)=>b.roundScore()-a.roundScore())[0]||agents[0];
-  const roots=[98.00,110.00,123.47,130.81,146.83,164.81];
-  return roots[leader?leader.id%roots.length:0];
-}
-function beep({freq=220,type='sine',dur=0.08,gain=0.04,pan=0,attack=0.005,release=0.12,filter=1800,detune=0,slide=1,q=0.2}){
-  if(!audioState.enabled)return; const ctx=ensureAudio(); if(!ctx)return;
-  const o=ctx.createOscillator(), g=ctx.createGain(), p=ctx.createStereoPanner(), f=ctx.createBiquadFilter();
-  o.type=type; o.frequency.setValueAtTime(Math.max(40,freq),ctx.currentTime); if(slide!==1)o.frequency.exponentialRampToValueAtTime(Math.max(40,freq*slide),ctx.currentTime+dur+release); o.detune.value=detune;
-  f.type='lowpass'; f.frequency.setValueAtTime(filter,ctx.currentTime); f.Q.value=q; p.pan.value=pan;
-  o.connect(f); f.connect(g); g.connect(p); p.connect(audioState.music);
-  g.gain.setValueAtTime(0.0001,ctx.currentTime);
-  g.gain.linearRampToValueAtTime(gain,ctx.currentTime+attack);
-  g.gain.setTargetAtTime(gain*0.75,ctx.currentTime+attack,Math.max(0.03,dur*0.7));
-  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur+release);
-  o.start(); o.stop(ctx.currentTime+dur+release+0.03);
-}
-function softPad({freq=220,dur=1.6,gain=0.012,pan=0,filter=1500,type='triangle',attack=0.25,release=0.8}){
-  if(!audioState.enabled)return; const ctx=ensureAudio(); if(!ctx)return;
-  const o1=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), p=ctx.createStereoPanner(), f=ctx.createBiquadFilter();
-  o1.type=type; o2.type='sine';
-  o1.frequency.setValueAtTime(freq,ctx.currentTime); o2.frequency.setValueAtTime(freq*1.003,ctx.currentTime);
-  f.type='lowpass'; f.frequency.setValueAtTime(filter,ctx.currentTime); p.pan.value=pan;
-  o1.connect(f); o2.connect(f); f.connect(g); g.connect(p); p.connect(audioState.music);
-  g.gain.setValueAtTime(0.0001,ctx.currentTime);
-  g.gain.linearRampToValueAtTime(gain,ctx.currentTime+attack);
-  g.gain.setTargetAtTime(gain*0.8,ctx.currentTime+attack,0.45);
-  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur+release);
-  o1.start(); o2.start(); o1.stop(ctx.currentTime+dur+release+0.04); o2.stop(ctx.currentTime+dur+release+0.04);
-}
-function lowPulse({freq=92,gain=0.02,pan=0,filter=580,shape=1}){
-  beep({freq,type:'sine',dur:0.065,gain,pan,filter,attack:0.004,release:0.10,slide:0.985});
-  setTimeout(()=>beep({freq:freq*(shape>1?1.5:2),type:'triangle',dur:0.032,gain:gain*0.38,pan,filter:filter+420,attack:0.003,release:0.055}),18);
-}
-function softTick({freq=420,gain=0.005,pan=0,filter=2100,slide=1.01}){
-  beep({freq,type:'triangle',dur:0.022,gain,pan,filter,attack:0.002,release:0.05,slide});
-}
-function marketChord(base,pan,intensity=0.4,bright=0){
-  const gain=0.006+intensity*0.007;
-  beep({freq:base,type:'triangle',dur:0.12,gain,pan,filter:1400+bright,attack:0.01,release:0.18});
-  setTimeout(()=>beep({freq:base*1.25,type:'sine',dur:0.11,gain:gain*0.82,pan,filter:1800+bright,attack:0.01,release:0.16}),52);
-  setTimeout(()=>beep({freq:base*1.5,type:'triangle',dur:0.10,gain:gain*0.62,pan,filter:2200+bright,attack:0.01,release:0.14}),105);
-}
-function computeTension(){
-  const alive=agents.filter(a=>a.alive); if(!alive.length)return 0;
-  const lowHp=alive.filter(a=>a.hp<35).length/alive.length;
-  const poisonDensity=clamp(drops.filter(d=>d.type==='poison').length/10,0,1);
-  const roundEnd=clamp(roundProgress(),0,1);
-  const closeLead=[...alive].sort((a,b)=>b.roundScore()-a.roundScore());
-  let clash=0; if(closeLead.length>1){const gap=Math.abs(closeLead[0].roundScore()-closeLead[1].roundScore()); clash=1-clamp(gap/220,0,1);}
-  audioState.deathHits=audioState.deathHits.filter(t=>tick-t<140);
-  const deathPulse=clamp(audioState.deathHits.length/4,0,1);
-  const vol=clamp(market.reduce((s,m)=>s+Math.abs((m.price-m.prev)/Math.max(1,m.prev)),0)/CFG.length*22,0,1);
-  return clamp(lowHp*0.22+poisonDensity*0.20+clash*0.18+roundEnd*0.18+deathPulse*0.12+vol*0.10,0,1);
-}
-function beatAudioStep(){
-  if(!audioState.enabled||!audioState.ctx||paused)return;
-  const gap=beatIntervalTicks();
-  if(audioState.lastBeat>=0&&tick-audioState.lastBeat<gap)return;
-  audioState.lastBeat=tick;
-  const t=computeTension(), prog=roundProgress(), step=audioState.beatStep%8;
-  audioState.beatStep=(audioState.beatStep+1)%64;
-  const leader=[...agents].sort((a,b)=>b.roundScore()-a.roundScore())[0]||agents[0];
-  const pan=leader?panForX(leader.x)*0.22:0;
-  const base=beatBase();
-  const kick=[1.0,0.0,0.42,0.0,0.82,0.0,0.30,0.12][step];
-  const tickPat=[0.0,0.18,0.0,0.12,0.0,0.22,0.0,0.12][step];
-  const w=audioState.warp;
-  const bright=600 + t*320 + w.food*850 + w.alliance*420 + prog*280;
-  const dark=1 - clamp(w.poison*0.22 + w.death*0.18,0,0.42);
-  if(kick>0){
-    lowPulse({freq:base*(step===4?0.75:0.5),gain:(0.010+kick*0.018+t*0.006)*(0.96+w.trade*0.10),pan,filter:(440+bright*0.42)*dark,shape:step===4?2:1});
-  }
-  if(tickPat>0){
-    softTick({freq:base*3.0*(1+step*0.006),gain:0.0035+tickPat*0.004+t*0.0018,pan:-pan*0.7,filter:1600+bright*0.7,slide:1.006+w.food*0.01-w.poison*0.008});
-  }
-  if(step===0||step===4){
-    marketChord(base*(step===4?1.122:1),pan,0.28+t*0.55+w.alliance*0.35,bright);
-  }
-  if(w.food>0.18&&(step===2||step===6)){
-    setTimeout(()=>softTick({freq:base*4.0,gain:0.004+w.food*0.003,pan:pan*0.6,filter:2400+w.food*600,slide:1.012}),45);
-  }
-  if(w.poison>0.20&&(step===3||step===7)){
-    setTimeout(()=>beep({freq:base*1.35,type:'triangle',dur:0.055,gain:0.0045+w.poison*0.004,pan:-pan*0.4,filter:1000+w.poison*300,slide:0.965-w.poison*0.015,attack:0.003,release:0.08}),32);
-  }
-  if((w.death>0.24||prog>0.88)&&(step===6||step===7)){
-    setTimeout(()=>beep({freq:base*0.5,type:'sine',dur:0.10,gain:0.004+w.death*0.005+prog*0.003,pan,filter:700+prog*240,slide:0.90,attack:0.008,release:0.16}),60);
-  }
-  if(prog>0.84&&step===0){
-    softPad({freq:base*2,dur:0.55+prog*0.55,gain:0.004+prog*0.004+t*0.002,pan,filter:1600+prog*800+w.food*400,type:'sine',attack:0.08,release:0.28});
-  }
-  if(tick-audioState.lastBar>gap*8 || audioState.lastBar<0){
-    audioState.lastBar=tick;
-    if(t>0.18||prog>0.55)softPad({freq:base,dur:1.0+prog*0.45,gain:0.0038+t*0.003,pan:pan*0.5,filter:1200+bright*0.45,type:'triangle',attack:0.15,release:0.38});
-  }
-  decayWarps();
-}
-function moveAudio(agent){
-  if(!audioState.enabled||tick-audioState.lastMove[agent.id]<11)return;
-  audioState.lastMove[agent.id]=tick;
-  const pan=panForX(agent.x), base=[220,247,262,294,330,370][agent.id%6], step=agent.dir===0?5:agent.dir===1?2:agent.dir===2?-3:-1;
-  const tension=computeTension();
-  softTick({freq:base*Math.pow(2,step/12),gain:0.0018+agent.energy/70000+tension*0.0008,pan,filter:1200+agent.energy*1.2+tension*350,slide:1+(agent.dir===1?0.012:agent.dir===3?-0.010:0)});
-}
-function foodAudio(agent,targetId=-1){
-  const pan=panForX(agent.x); bumpWarp('food',0.34);
-  beep({freq:beatBase()*2,type:'sine',dur:0.08,gain:0.0075,pan,filter:2200,attack:0.01,release:0.12});
-  setTimeout(()=>beep({freq:beatBase()*2.5,type:'triangle',dur:0.06,gain:0.005,pan,filter:2600,attack:0.008,release:0.08}),48);
-  if(targetId>=0&&agents[targetId])setTimeout(()=>softTick({freq:beatBase()*3.2,gain:0.003,pan:panForX(agents[targetId].x),filter:2300,slide:1.01}),72);
-}
-function poisonAudio(agent,targetId=-1){
-  const pan=panForX(agent.x); bumpWarp('poison',0.38);
-  beep({freq:beatBase()*1.25,type:'triangle',dur:0.05,gain:0.007,pan,filter:980,slide:0.93,attack:0.004,release:0.08});
-  setTimeout(()=>beep({freq:beatBase()*1.1,type:'sine',dur:0.045,gain:0.0045,pan:targetId>=0&&agents[targetId]?panForX(agents[targetId].x):pan,filter:900,slide:0.91,attack:0.004,release:0.08}),34);
-}
-function deathAudio(agent){
-  audioState.deathHits.push(tick); bumpWarp('death',0.52);
-  const pan=panForX(agent.x);
-  beep({freq:beatBase(),type:'triangle',dur:0.06,gain:0.010,pan,filter:950,slide:0.74,attack:0.006,release:0.10});
-  setTimeout(()=>softPad({freq:beatBase()*0.5,dur:0.34,gain:0.0048,pan,filter:760,type:'sine',attack:0.03,release:0.18}),42);
-}
-function allianceAudio(a,b){
-  bumpWarp('alliance',0.28);
-  const pan=(panForX(a.x)+panForX(b.x))*0.5;
-  beep({freq:beatBase()*2.0,type:'triangle',dur:0.07,gain:0.006,pan,filter:2200,attack:0.008,release:0.10});
-  setTimeout(()=>beep({freq:beatBase()*2.5,type:'sine',dur:0.06,gain:0.0045,pan,filter:2600,attack:0.008,release:0.09}),40);
-}
-function tradeAudio(kind){
-  bumpWarp('trade',0.20);
-  if(kind==='buy'){
-    softTick({freq:beatBase()*2.8,gain:0.005,pan:-0.12,filter:2100,slide:1.008});
-    setTimeout(()=>softTick({freq:beatBase()*3.2,gain:0.0038,pan:-0.06,filter:2400,slide:1.01}),35);
-  }else{
-    softTick({freq:beatBase()*2.2,gain:0.0048,pan:0.12,filter:1700,slide:0.99});
-    setTimeout(()=>softTick({freq:beatBase()*1.9,gain:0.0035,pan:0.08,filter:1500,slide:0.985}),35);
-  }
-}
-function haltAudio(){bumpWarp('trade',0.12); lowPulse({freq:beatBase()*0.6,gain:0.006,pan:0,filter:540,shape:1});}
-function bellAudio(){
-  beep({freq:beatBase()*3,type:'sine',dur:0.11,gain:0.010,pan:0,filter:2800,attack:0.01,release:0.16});
-  setTimeout(()=>beep({freq:beatBase()*3.75,type:'triangle',dur:0.10,gain:0.0065,pan:0,filter:3200,attack:0.01,release:0.14}),58);
-}
-function toggleAudio(){audioState.enabled=!audioState.enabled; if(audioState.enabled){resumeAudio();} else if(audioState.master&&audioState.ctx){audioState.master.gain.setTargetAtTime(0.0001,audioState.ctx.currentTime,0.05);} syncAudioUI();}
-function syncAudioUI(){const led=document.getElementById('audio-led'); const st=document.getElementById('audio-state'); if(!led||!st)return; led.classList.toggle('off',!audioState.enabled); st.textContent=audioState.enabled?'AUDIO ON':'AUDIO OFF'; if(audioState.master&&audioState.ctx&&audioState.enabled){audioState.master.gain.setTargetAtTime(audioState.vol,audioState.ctx.currentTime,0.08);} }
+
 class Agent{
   constructor(id,x,y,gen){
     this.id=id;this.x=x;this.y=y;this.dir=Math.floor(Math.random()*4);
@@ -442,30 +553,18 @@ class Agent{
     this.lastPulse='—';
     this.roundPeak=0;
   }
-  resetRoundStats(){
-    this.rSurv=0;this.rKills=0;this.rFeeds=0;this.rPoisonsLaid=0;this.rPoisonHits=0;this.rFoodShared=0;this.rConsumed=0;this.rAllianceTicks=0;this.roundPeak=0;
-  }
+  resetRoundStats(){this.rSurv=0;this.rKills=0;this.rFeeds=0;this.rPoisonsLaid=0;this.rPoisonHits=0;this.rFoodShared=0;this.rConsumed=0;this.rAllianceTicks=0;this.roundPeak=0}
   flood(sx,sy,mx=160){
     let c=0;const seen=new Set();const q=[[sx,sy]];seen.add(sx+','+sy);
     while(q.length&&c<mx){
       const [cx,cy]=q.shift();c++;
-      for(const[dx,dy] of DIRS){
-        const nx=cx+dx,ny=cy+dy,key=nx+','+ny;
-        if(!inBounds(nx,ny)||seen.has(key))continue;
-        if(occupantAt(nx,ny,this.id))continue;
-        seen.add(key);q.push([nx,ny]);
-      }
+      for(const[dx,dy] of DIRS){const nx=cx+dx,ny=cy+dy,key=nx+','+ny;if(!inBounds(nx,ny)||seen.has(key))continue;if(occupantAt(nx,ny,this.id))continue;seen.add(key);q.push([nx,ny]);}
     }
     return c;
   }
   nearest(alive,mode='enemy'){
     let best=null,bestD=1e9;
-    for(const a of alive){
-      if(a.id===this.id||!a.alive)continue;
-      if(mode==='ally'&&a.id!==this.allyId)continue;
-      if(mode==='enemy'&&a.id===this.allyId)continue;
-      const d=dist(this,a);if(d<bestD){bestD=d;best=a}
-    }
+    for(const a of alive){if(a.id===this.id||!a.alive)continue;if(mode==='ally'&&a.id!==this.allyId)continue;if(mode==='enemy'&&a.id===this.allyId)continue;const d=dist(this,a);if(d<bestD){bestD=d;best=a}}
     return {agent:best,d:bestD};
   }
   sense(alive){
@@ -491,17 +590,8 @@ class Agent{
     const target=chooseFood?(ctx.weakFriend?ctx.weakFriend.id:(ctx.ally?ctx.ally.id:-1)):(ctx.weakEnemy?ctx.weakEnemy.id:(ctx.nearestEnemy?ctx.nearestEnemy.id:-1));
     const confidence=clamp(Math.abs(foodScore-poisonScore)/(Math.max(foodScore,poisonScore,.1)),0.2,0.98);
     let why='';
-    if(chooseFood){
-      if(ctx.weakFriend)why='ally weak';
-      else if(ctx.highEnergy)why='surplus energy';
-      else if(ctx.lowHp)why='self-recovery soon';
-      else why='trust cycle building';
-    }else{
-      if(ctx.weakEnemy)why='finish vulnerable foe';
-      else if(ctx.nearestEnemy&&ctx.enemyDist<8)why='enemy pressure';
-      else if(ctx.localCrowd>2)why='crowd control';
-      else why='territorial threat';
-    }
+    if(chooseFood){if(ctx.weakFriend)why='ally weak';else if(ctx.highEnergy)why='surplus energy';else if(ctx.lowHp)why='self-recovery soon';else why='trust cycle building'}
+    else{if(ctx.weakEnemy)why='finish vulnerable foe';else if(ctx.nearestEnemy&&ctx.enemyDist<8)why='enemy pressure';else if(ctx.localCrowd>2)why='crowd control';else why='territorial threat'}
     this.brain.lastDecision={kind:chooseFood?'FOOD':'POISON',food:foodScore,poison:poisonScore,target,confidence,why,ctx};
     this.intent=chooseFood?'PLOT FOOD':'PLOT POISON';
     this.intentColor=chooseFood?'#7bffb6':'#ff7a8d';
@@ -511,73 +601,46 @@ class Agent{
     this.intentWhy=why;
   }
   evalMove(nx,ny,alive){
-    const w=this.brain.w;let s=0;
-    const space=this.flood(nx,ny,180);s+=space*0.045*(0.35+w[5]*0.65);
-    for(const d of drops){
-      const dd=Math.abs(d.x-nx)+Math.abs(d.y-ny);
-      if(d.type==='food'){
-        const hunger=(this.hp<55?2.4:1.25)+(this.energy<90?1.0:0);
-        if(dd<18)s+=(1-dd/18)*12*w[0]*hunger;
-      }else if(d.type==='poison'&&d.by!==this.id){if(dd<6)s-=(6-dd)*8*(0.45+w[1]*0.55)}
-    }
-    for(const a of alive){
-      if(a.id===this.id||!a.alive)continue;
-      const dd=Math.abs(a.x-nx)+Math.abs(a.y-ny);
-      if(a.id===this.allyId){s+=(1-Math.min(dd,20)/20)*11*(0.35+w[3]*0.85)}
-      else{
-        s+=(1-Math.min(dd,16)/16)*9*w[2];
-        if(dd<4)s-=(4-dd)*3.2*(0.55+w[1]*0.45);
-        if(a.hp<35)s+=(1-Math.min(dd,12)/12)*6*w[2];
-      }
-    }
+    const w=this.brain.w;let s=0;const space=this.flood(nx,ny,180);s+=space*0.045*(0.35+w[5]*0.65);
+    for(const d of drops){const dd=Math.abs(d.x-nx)+Math.abs(d.y-ny);if(d.type==='food'){const hunger=(this.hp<55?2.4:1.25)+(this.energy<90?1.0:0);if(dd<18)s+=(1-dd/18)*12*w[0]*hunger}else if(d.type==='poison'&&d.by!==this.id){if(dd<6)s-=(6-dd)*8*(0.45+w[1]*0.55)}}
+    for(const a of alive){if(a.id===this.id||!a.alive)continue;const dd=Math.abs(a.x-nx)+Math.abs(a.y-ny);if(a.id===this.allyId){s+=(1-Math.min(dd,20)/20)*11*(0.35+w[3]*0.85)}else{s+=(1-Math.min(dd,16)/16)*9*w[2];if(dd<4)s-=(4-dd)*3.2*(0.55+w[1]*0.45);if(a.hp<35)s+=(1-Math.min(dd,12)/12)*6*w[2];}}
     if(occupantAt(nx,ny,this.id))s-=100;
     if(nx<4||ny<4||nx>GW-5||ny>GH-5)s-=1.6*(0.2+w[5]*0.5);
     return s;
   }
   chooseRelease(alive){
     const d=this.brain.lastDecision;
-    if(this.energy<18){
-      this.hp-=6;this.intent='STRAIN';this.intentColor='#ff9b66';this.intentText='could not afford release';this.intentWhy='resource debt';addEvent(this.id,'COULD NOT RELEASE — strain');return;
-    }
+    if(this.energy<18){this.hp-=6;this.intent='STRAIN';this.intentColor='#ff9b66';this.intentText='could not afford release';this.intentWhy='resource debt';addEvent(this.id,'COULD NOT RELEASE — strain');return}
     if(d.kind==='FOOD')this.releaseFood(alive,d);else this.releasePoison(alive,d);
   }
   releaseFood(alive,dec){
     let tx=this.x,ty=this.y,targetName='public lane';
     const ally=dec.target>=0?alive.find(a=>a.id===dec.target&&a.alive):null;
-    if(ally){tx=Math.round((this.x+ally.x)/2);ty=Math.round((this.y+ally.y)/2);targetName=CFG[ally.id].name;}
-    else{const dd=DIRS[(this.dir+2)%4];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2;}
+    if(ally){tx=Math.round((this.x+ally.x)/2);ty=Math.round((this.y+ally.y)/2);targetName=CFG[ally.id].name}
+    else{const dd=DIRS[(this.dir+2)%4];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2}
     tx=clamp(tx,1,GW-2);ty=clamp(ty,1,GH-2);if(occupantAt(tx,ty,this.id)){tx=this.x;ty=this.y}
     const val=ally&&ally.hp<50?24:18;
     drops.push({x:tx,y:ty,type:'food',by:this.id,ttl:200,val,age:0,target:ally?ally.id:-1});
     this.energy-=18+Math.floor(val/4);this.feedCount++;this.rFeeds++;this.lastPulse='FOOD';this.foodShared+=val;this.rFoodShared+=val;
-    this.intent='RELEASED FOOD';this.intentColor='#7bffb6';this.intentText='fed '+targetName;this.intentWhy=dec.why;foodAudio(this,ally?ally.id:-1);addEvent(this.id,'RELEASED FOOD → '+targetName);
+    this.intent='RELEASED FOOD';this.intentColor='#7bffb6';this.intentText='fed '+targetName;this.intentWhy=dec.why;addEvent(this.id,'RELEASED FOOD → '+targetName);
   }
   releasePoison(alive,dec){
     const ctx=dec.ctx||this.sense(alive);let foe=dec.target>=0?alive.find(a=>a.id===dec.target&&a.alive):null;if(!foe)foe=ctx.nearestEnemy;
     let tx=this.x,ty=this.y,targetName='lane trap';
-    if(foe){tx=Math.round(this.x*0.35+foe.x*0.65);ty=Math.round(this.y*0.35+foe.y*0.65);targetName=CFG[foe.id].name;}
-    else{const dd=DIRS[this.dir];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2;}
+    if(foe){tx=Math.round(this.x*0.35+foe.x*0.65);ty=Math.round(this.y*0.35+foe.y*0.65);targetName=CFG[foe.id].name}
+    else{const dd=DIRS[this.dir];tx=this.x+dd[0]*2;ty=this.y+dd[1]*2}
     tx=clamp(tx,1,GW-2);ty=clamp(ty,1,GH-2);
     const val=26+(ctx.weakEnemy?8:0)+(this.brain.w[4]>0.7?4:0);
     drops.push({x:tx,y:ty,type:'poison',by:this.id,ttl:160,val,age:0,target:foe?foe.id:-1});
     this.energy-=16+Math.floor(val/6);this.poisonCount++;this.rPoisonsLaid++;this.lastPulse='POISON';
-    this.intent='RELEASED POISON';this.intentColor='#ff7a8d';this.intentText='trapped '+targetName;this.intentWhy=dec.why;poisonAudio(this,foe?foe.id:-1);addEvent(this.id,'RELEASED POISON → '+targetName);
+    this.intent='RELEASED POISON';this.intentColor='#ff7a8d';this.intentText='trapped '+targetName;this.intentWhy=dec.why;addEvent(this.id,'RELEASED POISON → '+targetName);
   }
   maybeAlliance(alive){
     if(this.allyTimer>0){this.allyTimer--;this.allianceTicks++;this.rAllianceTicks++;}else this.allyId=-1;
     if(this.allyId!==-1||Math.random()>0.08)return;
     let best=-99,bid=-1;
-    for(const a of alive){
-      if(a.id===this.id||!a.alive)continue;
-      const d=dist(this,a);if(d>16)continue;
-      const trust=this.brain.trust[a.id];const compat=1-Math.abs(this.brain.w[3]-a.brain.w[3])*0.5-Math.abs(this.brain.w[2]-a.brain.w[2])*0.3;
-      const score=trust+compat-(a.allyId>=0?0.12:0);if(score>best){best=score;bid=a.id}
-    }
-    if(bid>=0&&best>0.22){
-      this.allyId=bid;this.allyTimer=90+Math.floor(Math.random()*110);
-      const o=agents.find(a=>a.id===bid&&a.alive);if(o&&o.allyId===-1){o.allyId=this.id;o.allyTimer=this.allyTimer}
-      allianceAudio(this,o||this);addEvent(this.id,'ALLIED → '+CFG[bid].name);
-    }
+    for(const a of alive){if(a.id===this.id||!a.alive)continue;const d=dist(this,a);if(d>16)continue;const trust=this.brain.trust[a.id];const compat=1-Math.abs(this.brain.w[3]-a.brain.w[3])*0.5-Math.abs(this.brain.w[2]-a.brain.w[2])*0.3;const score=trust+compat-(a.allyId>=0?0.12:0);if(score>best){best=score;bid=a.id}}
+    if(bid>=0&&best>0.22){this.allyId=bid;this.allyTimer=90+Math.floor(Math.random()*110);const o=agents.find(a=>a.id===bid&&a.alive);if(o&&o.allyId===-1){o.allyId=this.id;o.allyTimer=this.allyTimer}addEvent(this.id,'ALLIED → '+CFG[bid].name)}
   }
   think(alive){
     if(!this.alive)return;
@@ -585,53 +648,20 @@ class Agent{
     if(this.energy<=0||this.hp<=0){this.die();return}
     if(this.releaseCd<=0){this.chooseRelease(alive);this.releaseEvery=24+Math.floor((1-this.brain.w[1])*18)+Math.floor(Math.random()*8);this.releaseCd=this.releaseEvery}
     const opts=[];
-    for(let i=0;i<4;i++){
-      const nx=this.x+DIRS[i][0],ny=this.y+DIRS[i][1];
-      if(!inBounds(nx,ny)||occupantAt(nx,ny,this.id))continue;
-      let s=this.evalMove(nx,ny,alive);if(i===this.dir)s+=2.6;s+=rand(3.8);opts.push({d:i,nx,ny,s});
-    }
+    for(let i=0;i<4;i++){const nx=this.x+DIRS[i][0],ny=this.y+DIRS[i][1];if(!inBounds(nx,ny)||occupantAt(nx,ny,this.id))continue;let s=this.evalMove(nx,ny,alive);if(i===this.dir)s+=2.6;s+=rand(3.8);opts.push({d:i,nx,ny,s})}
     if(!opts.length){this.hp-=5;if(this.hp<=0)this.die();return}
-    opts.sort((a,b)=>b.s-a.s);const pick=opts[0];
-    this.trail.push({x:this.x,y:this.y,t:tick});if(this.trail.length>135)this.trail.shift();this.dir=pick.d;this.x=pick.nx;this.y=pick.ny;moveAudio(this);
-    for(let i=drops.length-1;i>=0;i--){
-      const d=drops[i];if(d.x!==this.x||d.y!==this.y)continue;
-      if(d.type==='food'){
-        this.hp=clamp(this.hp+d.val,0,100);this.energy=clamp(this.energy+d.val*1.35,0,this.maxEnergy);this.resourcesConsumed+=d.val;this.rConsumed+=d.val;
-        if(d.by!==this.id){this.brain.trust[d.by]=clamp(this.brain.trust[d.by]+0.12,-1,1);brains[d.by].w[3]=clamp(brains[d.by].w[3]+0.008,0.02,0.98);addEvent(this.id,'ATE FOOD from '+CFG[d.by].name)}
-        else addEvent(this.id,'ATE OWN CACHE');
-        drops.splice(i,1);
-      }else if(d.type==='poison'&&d.by!==this.id){
-        this.hp-=d.val;this.brain.trust[d.by]=clamp(this.brain.trust[d.by]-0.24,-1,1);const owner=agents[d.by];if(owner){owner.poisonHits++;owner.rPoisonHits++;}
-        brains[d.by].w[4]=clamp(brains[d.by].w[4]+0.007,0.02,0.98);brains[d.by].w[2]=clamp(brains[d.by].w[2]+0.005,0.02,0.98);addEvent(this.id,'POISONED by '+CFG[d.by].name+'!');
-        drops.splice(i,1);if(this.hp<=0){if(owner){owner.killCount++;owner.rKills++;}this.die();return}
-      }
+    opts.sort((a,b)=>b.s-a.s);const pick=opts[0];this.trail.push({x:this.x,y:this.y,t:tick});if(this.trail.length>135)this.trail.shift();this.dir=pick.d;this.x=pick.nx;this.y=pick.ny;
+    for(let i=drops.length-1;i>=0;i--){const d=drops[i];if(d.x!==this.x||d.y!==this.y)continue;
+      if(d.type==='food'){this.hp=clamp(this.hp+d.val,0,100);this.energy=clamp(this.energy+d.val*1.35,0,this.maxEnergy);this.resourcesConsumed+=d.val;this.rConsumed+=d.val;if(d.by!==this.id){this.brain.trust[d.by]=clamp(this.brain.trust[d.by]+0.12,-1,1);brains[d.by].w[3]=clamp(brains[d.by].w[3]+0.008,0.02,0.98);addEvent(this.id,'ATE FOOD from '+CFG[d.by].name)}else addEvent(this.id,'ATE OWN CACHE');drops.splice(i,1)}
+      else if(d.type==='poison'&&d.by!==this.id){this.hp-=d.val;this.brain.trust[d.by]=clamp(this.brain.trust[d.by]-0.24,-1,1);const owner=agents[d.by];if(owner){owner.poisonHits++;owner.rPoisonHits++;}brains[d.by].w[4]=clamp(brains[d.by].w[4]+0.007,0.02,0.98);brains[d.by].w[2]=clamp(brains[d.by].w[2]+0.005,0.02,0.98);addEvent(this.id,'POISONED by '+CFG[d.by].name+'!');drops.splice(i,1);if(this.hp<=0){if(owner){owner.killCount++;owner.rKills++;}this.die();return}}
     }
-    for(const a of alive){
-      if(a.id===this.id||!a.alive)continue;
-      if(a.x===this.x&&a.y===this.y){
-        const allyClash=(a.id===this.allyId);this.hp-=allyClash?8:16;a.hp-=allyClash?8:16;if(!allyClash){this.brain.trust[a.id]-=0.06;a.brain.trust[this.id]-=0.06}
-        if(this.hp<=0){a.killCount++;a.rKills++;this.die()}
-        if(a.hp<=0){this.killCount++;this.rKills++;a.die()}
-      }
-    }
+    for(const a of alive){if(a.id===this.id||!a.alive)continue;if(a.x===this.x&&a.y===this.y){const allyClash=(a.id===this.allyId);this.hp-=allyClash?8:16;a.hp-=allyClash?8:16;if(!allyClash){this.brain.trust[a.id]-=0.06;a.brain.trust[this.id]-=0.06}if(this.hp<=0){a.killCount++;a.rKills++;this.die()}if(a.hp<=0){this.killCount++;this.rKills++;a.die()}}}
   }
-  roundScore(){
-    const life=this.alive?38:0;
-    return Math.round(life+this.rSurv*0.18+this.hp*0.75+this.energy*0.18+this.rKills*56+this.rPoisonHits*18+this.rFeeds*24+this.rFoodShared*0.42+this.rAllianceTicks*0.10+this.rConsumed*0.24-this.rPoisonsLaid*1.2);
-  }
+  roundScore(){const life=this.alive?38:0;return Math.round(life+this.rSurv*0.18+this.hp*0.75+this.energy*0.18+this.rKills*56+this.rPoisonHits*18+this.rFeeds*24+this.rFoodShared*0.42+this.rAllianceTicks*0.10+this.rConsumed*0.24-this.rPoisonsLaid*1.2)}
   die(){
-    if(!this.alive)return;
-    this.alive=false;deathAudio(this);addEvent(this.id,'DIED');
-    const score=this.roundScore()/260;const br=this.brain,lr=0.055;
-    for(let i=0;i<6;i++){
-      let grad=(score-0.75)*lr*(0.5+Math.random());
-      if(i===2)grad+=(this.killCount>1?0.01:-0.005);
-      if(i===3)grad+=(this.feedCount>1?0.01:-0.004);
-      if(i===4)grad+=(this.poisonHits>0?0.008:-0.004);
-      if(i===1)grad+=(this.energy<70?0.008:0);
-      br.w[i]=clamp(br.w[i]+grad+br.bias[i]*0.012+rand(0.01),0.02,0.98);
-      br.bias[i]=br.bias[i]*0.88+grad*0.4;
-    }
+    if(!this.alive)return;this.alive=false;addEvent(this.id,'DIED');
+    const score=this.roundScore()/260,br=this.brain,lr=0.055;
+    for(let i=0;i<6;i++){let grad=(score-0.75)*lr*(0.5+Math.random());if(i===2)grad+=(this.killCount>1?0.01:-0.005);if(i===3)grad+=(this.feedCount>1?0.01:-0.004);if(i===4)grad+=(this.poisonHits>0?0.008:-0.004);if(i===1)grad+=(this.energy<70?0.008:0);br.w[i]=clamp(br.w[i]+grad+br.bias[i]*0.012+rand(0.01),0.02,0.98);br.bias[i]=br.bias[i]*0.88+grad*0.4}
     for(let i=0;i<6;i++)br.trust[i]*=0.86;
     br.phil=getPhil(br.w);br.philHist.push(br.phil.name);if(br.philHist.length>20)br.philHist.shift();
     LB[this.id].totalSurv+=this.survTick;LB[this.id].kills+=this.killCount;LB[this.id].feeds+=this.feedCount;LB[this.id].poisonsLaid+=this.poisonCount;
@@ -642,78 +672,153 @@ class Agent{
 function respawn(id){
   let rx,ry,tries=0;do{rx=8+Math.floor(Math.random()*(GW-16));ry=8+Math.floor(Math.random()*(GH-16));tries++}while(occupantAt(rx,ry)&&tries<300);
   const br=brains[id];for(let i=0;i<6;i++)br.w[i]=clamp(br.w[i]+rand(0.06),0.02,0.98);br.phil=getPhil(br.w);LB[id].gens++;generation=Math.max(...LB.map(l=>l.gens));agents[id]=new Agent(id,rx,ry,LB[id].gens);addEvent(id,'RESPAWNED (Gen '+LB[id].gens+')');
+  Sound.nudge('respawn');
 }
 
+function defaultRawForStrategy(id){
+  switch(id){
+    case 'momentum': return [2.2,1.6,1.4,1.2,1.2,1.0,1.0];
+    case 'contrarian': return [1.4,1.4,1.4,1.4,1.4,1.4,1.2];
+    case 'philosopher': return [1.2,1.2,1.2,1.2,1.2,1.2,1.8];
+    case 'alliance': return [1.5,1.5,1.5,1.5,1.5,1.5,1.1];
+    case 'stoic': return [1.0,1.0,1.0,1.0,1.0,1.0,2.7];
+    default: return [0,0,0,0,0,0,1];
+  }
+}
 function initInvestors(){
   investors=[
-    {name:'YOU',color:'#ffd700',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,trades:0,pnl:0},
-    {name:'AI RIVAL',color:'#9fd0ff',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,trades:0,pnl:0}
+    {name:'YOU',color:'#ffd700',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,pnl:0,strategyId:'manual',draftRaw:defaultRawForStrategy('manual').slice(),lockedWeights:[0,0,0,0,0,0,1],prepared:false,trades:0,memory:{tilt:Array(CFG.length).fill(0),cashBias:0,confidence:0.5,notes:[]},entryNet:1000,roundEntryPrices:Array(CFG.length).fill(100),lastRoundReturn:0,lastRoundNote:'No round yet.'},
+    {name:'AI RIVAL',color:'#9fd0ff',cash:1000,shares:Array(CFG.length).fill(0),history:[],netWorth:1000,pnl:0,strategyId:'momentum',draftRaw:defaultRawForStrategy('momentum').slice(),lockedWeights:[0,0,0,0,0,0,1],prepared:false,trades:0,memory:{tilt:Array(CFG.length).fill(0),cashBias:0,confidence:0.5,notes:[]},entryNet:1000,roundEntryPrices:Array(CFG.length).fill(100),lastRoundReturn:0,lastRoundNote:'No round yet.'}
   ];
-  activeTrader=0;
-  applyInvestorNames();
+  activeTrader=0;applyInvestorNames();
+}
+function applyInvestorNames(){if(!investors.length)return;investors[0].name=selectedMode==='ai'?'YOU':'PLAYER A';investors[1].name=selectedMode==='ai'?'AI RIVAL':'PLAYER B';if(selectedMode==='ai')activeTrader=0}
+function setMode(mode){selectedMode=mode;document.getElementById('mode-ai').classList.toggle('sel',mode==='ai');document.getElementById('mode-pvp').classList.toggle('sel',mode==='pvp');if(investors.length)syncModeUI()}
+function switchTrader(){if(phase!=='setup')return;if(selectedMode!=='pvp')return;setupCursor=1-setupCursor;activeTrader=setupCursor;renderAllPanels()}
+function syncPauseUI(){document.getElementById('pause-btn').textContent=paused?'RUN':'PAUSE';document.getElementById('trade-halt').classList.toggle('show',phase==='run'&&!paused)}
+function toggleRun(){if(phase!=='run')return;paused=!paused;syncPauseUI()}
+function setSpd(v){speed=v;document.querySelectorAll('#speed-ctrl button').forEach(b=>{const m={'1x':50,'2x':25,'5x':8,'MAX':1};if(m[b.textContent]!==undefined)b.classList.toggle('sel',m[b.textContent]===v)})}
+
+function strategySelectable(invId,strategyId){
+  const inv=investors[invId];
+  inv.strategyId=strategyId;
+  if(strategyId!=='manual')inv.draftRaw=defaultRawForStrategy(strategyId).slice();
+  inv.prepared=false;
+  if(phase==='setup')renderAllPanels();
 }
 
-function applyInvestorNames(){
-  if(!investors.length)return;
-  investors[0].name=selectedMode==='ai'?'YOU':'PLAYER A';
-  investors[1].name=selectedMode==='ai'?'AI RIVAL':'PLAYER B';
-  if(selectedMode==='ai')activeTrader=0;
-}
+function liveRankings(){return [...agents].sort((a,b)=>b.roundScore()-a.roundScore())}
+function currentRankFor(id){return liveRankings().findIndex(a=>a.id===id)+1}
 
-function setMode(mode){
-  selectedMode=mode;
-  document.getElementById('mode-ai').classList.toggle('sel',mode==='ai');
-  document.getElementById('mode-pvp').classList.toggle('sel',mode==='pvp');
+function valuationGap(i){return (market[i].signal-market[i].price)/Math.max(1,market[i].price)}
+function stabilityScore(i){
+  const a=agents[i],ph=(a.brain.phil||getPhil(a.brain.w)).name;
+  const stableBonus=(ph==='STOIC'||ph==='DIPLOMAT'||ph==='PRAGMATIST'||ph==='ALTRUIST')?1:0;
+  return LB[i].wins*0.8 + a.rFeeds*0.45 + a.rAllianceTicks*0.02 + stableBonus*3 - Math.abs(percentChange(i))*120;
 }
-function switchTrader(){if(selectedMode!=='pvp')return;activeTrader=1-activeTrader;renderAllPanels();}
-function setTradeStep(v){tradeStep=v;document.querySelectorAll('.bsz').forEach(b=>b.classList.toggle('sel',Math.abs(parseFloat(b.dataset.v)-v)<0.001));renderCards();}
-function syncPauseUI(){document.getElementById('pause-btn').textContent=paused?'RUN':'PAUSE';document.getElementById('trade-halt').classList.toggle('show',paused);}
-function pauseForTrade(){paused=true;syncPauseUI();haltAudio();}
-function toggleRun(){paused=!paused;resumeAudio();syncPauseUI();if(!paused)bellAudio();}
-function setSpd(v){speed=v;document.querySelectorAll('#speed-ctrl button').forEach(b=>{const m={'1x':50,'2x':25,'5x':8,'MAX':1};if(m[b.textContent]!==undefined)b.classList.toggle('sel',m[b.textContent]===v)});}
-
-function tradeStock(invId,stockId,dollars){
-  const inv=investors[invId],price=market[stockId].price;
-  if(dollars>0){tradeAudio('buy');
-    const spend=Math.min(inv.cash,dollars);if(spend<1)return false;
-    const shares=spend/price;inv.cash-=spend;inv.shares[stockId]+=shares;
-    tradeLog.push({who:invId,id:stockId,kind:'BUY',amt:spend,shares,price,tick});
-  }else if(dollars<0){tradeAudio('sell');
-    const maxValue=inv.shares[stockId]*price;const sell=Math.min(maxValue,-dollars);if(sell<1)return false;
-    const shares=sell/price;inv.shares[stockId]-=shares;inv.cash+=sell;
-    tradeLog.push({who:invId,id:stockId,kind:'SELL',amt:sell,shares,price,tick});
-  }else return false;
-  inv.trades++;if(tradeLog.length>90)tradeLog.shift();
-  updatePortfolioStats();
-  renderAllPanels();
-  return true;
+function allianceScore(i){
+  const a=agents[i];
+  let trust=0; for(let j=0;j<CFG.length;j++)if(j!==i)trust+=Math.max(0,a.brain.trust[j]);
+  return trust*3 + a.rFeeds*1.4 + a.rAllianceTicks*0.08 + (a.allyId>=0?4:0);
 }
-function buyAlloc(stockId){
-  pauseForTrade();
-  const inv=activeInvestor();const dollars=investorNetWorth(inv)*tradeStep;tradeStock(activeTrader,stockId,dollars);
+function manualWeights(inv){
+  let assets=CFG.map((_,i)=>clamp((inv.draftRaw&&inv.draftRaw[i])||0,0,1));
+  const sumAssets=assets.reduce((s,v)=>s+v,0);
+  if(sumAssets>1){
+    const scale=1/sumAssets;
+    assets=assets.map(v=>v*scale);
+  }
+  const cash=clamp(1-assets.reduce((s,v)=>s+v,0),0,1);
+  return [...assets,cash];
 }
-function sellAlloc(stockId){
-  pauseForTrade();
-  const inv=activeInvestor();const dollars=Math.min(holdingValue(inv,stockId),investorNetWorth(inv)*tradeStep);tradeStock(activeTrader,stockId,-dollars);
-}
-function rebalanceAI(){
-  if(selectedMode!=='ai')return;
-  const ai=investors[1],nw=investorNetWorth(ai);
-  const live=liveRankings();
-  const ranks={};live.forEach((a,idx)=>ranks[a.id]=idx+1);
-  const sig=CFG.map((_,i)=>{
-    const a=agents[i],m=market[i],d=a.brain.lastDecision;
-    const base=100 + LB[i].wins*8 + (7-ranks[i])*5 + a.roundScore()*0.03 + (a.alive?4:-6) + d.confidence*8 + (d.kind==='FOOD'?1.2:0);
-    return {i,score:base/(m.price/100)};
-  }).sort((a,b)=>b.score-a.score);
-  const preferred=sig.slice(0,2).map(x=>x.i);
-  const avoid=sig.slice(-2).map(x=>x.i);
-  preferred.forEach((i,idx)=>{
-    const desired=(idx===0?0.34:0.22);const cur=allocation(ai,i);if(cur<desired-0.03)tradeStock(1,i,Math.min(ai.cash,nw*(desired-cur)*0.65));
+function computeStrategyWeights(invId){
+  const inv=investors[invId],s=inv.strategyId;
+  if(s==='manual')return manualWeights(inv);
+  const scores=CFG.map((_,i)=>{
+    const a=agents[i],ph=a.brain.phil||getPhil(a.brain.w),rank=currentRankFor(i),pct=percentChange(i),gap=valuationGap(i),tilt=inv.memory.tilt[i]||0;
+    if(s==='momentum')return 15 + (7-rank)*5.5 + pct*140 + a.roundScore()*0.02 + (a.alive?4:-4) + tilt*22 + a.brain.lastDecision.confidence*4;
+    if(s==='contrarian')return 16 + gap*165 - pct*95 + (market[i].signal-market[i].price)*0.35 + LB[i].wins*2 + (a.alive?2:-3) + tilt*24;
+    if(s==='philosopher'){
+      const typeBoost={ALTRUIST:9,DIPLOMAT:8,STOIC:7,PRAGMATIST:6,ZEALOT:4,PREDATOR:2,NIHILIST:-2,ANARCHIST:0,HERMIT:3,EMERGENT:1}[ph.name]||0;
+      return 13 + typeBoost + stabilityScore(i) + LB[i].wins*1.5 + tilt*20;
+    }
+    if(s==='alliance')return 12 + allianceScore(i)*1.2 + (a.brain.lastDecision.kind==='FOOD'?1:0) + LB[i].feeds*0.7 + tilt*20;
+    if(s==='stoic')return 10 + LB[i].wins*2.6 + stabilityScore(i)*0.85 + gap*50 + tilt*14;
+    return 10 + tilt*10;
   });
-  avoid.forEach(i=>{const curVal=holdingValue(ai,i);if(curVal>nw*0.08)tradeStock(1,i,-nw*0.07);});
-  if(ai.cash>nw*0.35)tradeStock(1,preferred[0],Math.min(ai.cash,nw*0.12));
+  let cashRaw=1.2 + inv.memory.cashBias;
+  if(s==='momentum')cashRaw=0.65+Math.max(0,-inv.memory.confidence*0.2);
+  if(s==='contrarian')cashRaw=0.95+Math.max(0,-scores.reduce((s,v)=>s+v,0)/6000);
+  if(s==='philosopher')cashRaw=1.1;
+  if(s==='alliance')cashRaw=0.9;
+  if(s==='stoic')cashRaw=2.2+Math.max(0,0.3-inv.memory.confidence);
+  return normalizeWeights([...scores.map(v=>Math.max(0.1,v)),Math.max(0.2,cashRaw)]);
 }
+
+function rebalanceInvestor(invId,weights,kindLabel='LOCK'){
+  const inv=investors[invId];
+  const total=investorNetWorth(inv);
+  inv.cash=total*weights[6];
+  for(let i=0;i<CFG.length;i++)inv.shares[i]=(total*weights[i])/market[i].price;
+  inv.lockedWeights=weights.slice();
+  inv.entryNet=total;
+  inv.roundEntryPrices=market.map(m=>m.price);
+  inv.trades++;
+  roundLog.push({round:roundNo,who:invId,kind:kindLabel,strategy:strategyMeta(inv.strategyId).name,weights:weights.slice(),net:Math.round(total)});
+  if(roundLog.length>60)roundLog.shift();
+}
+
+function prepareInvestorsForRound(){
+  investors.forEach((inv,idx)=>{
+    const weights=computeStrategyWeights(idx);
+    rebalanceInvestor(idx,weights,isManual(inv)?'LOCK WHEEL':'LOCK STRAT');
+    inv.prepared=true;
+  });
+}
+
+function beginLockedRound(){
+  prepareInvestorsForRound();
+  market.forEach(m=>m.roundEntry=m.price);
+  phase='run';
+  paused=false;
+  activeTrader=selectedMode==='ai'?0:setupCursor;
+  addSystemNote('ROUND '+roundNo+' LOCKED — 1000 ticks');
+  Sound.nudge('roundStart');
+  syncPauseUI();
+  renderAllPanels();
+}
+
+function resetForSetup(){
+  phase='setup';
+  paused=true;
+  investors.forEach(inv=>inv.prepared=false);
+  setupCursor=0;
+  activeTrader=selectedMode==='ai'?0:0;
+  Sound.nudge('setup');
+  syncPauseUI();
+}
+
+function commitSetup(){
+  if(phase!=='setup' || winnerText)return;
+  if(selectedMode==='ai'){beginLockedRound();return}
+  const cur=currentSetupInvestor();
+  cur.prepared=true;
+  if(setupCursor===0){setupCursor=1;activeTrader=1;renderAllPanels();return}
+  beginLockedRound();
+}
+
+function addSystemNote(msg){events.push({id:0,msg,at:Date.now(),sys:true});if(events.length>7)events.shift();renderEvents()}
+function addEvent(id,msg){
+  events.push({id,msg,at:Date.now(),sys:false});if(events.length>7)events.shift();renderEvents();
+  /* nudge sound engine based on event content */
+  if(Sound.on){
+    if(msg.includes('DIED'))Sound.nudge('kill');
+    else if(msg.includes('RELEASED FOOD')||msg.includes('ATE FOOD'))Sound.nudge('food');
+    else if(msg.includes('POISON'))Sound.nudge('poison');
+    else if(msg.includes('ALLIED'))Sound.nudge('alliance');
+  }
+}
+function renderEvents(){document.getElementById('event-log').innerHTML=events.map(e=>{const col=e.sys?'#ffd76a':CFG[e.id].col;const glow=e.sys?'255,215,106':CFG[e.id].cR;const name=e.sys?'MARKET':CFG[e.id].name;return `<div class="ev" style="color:${col};text-shadow:0 0 10px rgba(${glow},0.18)">${name}: ${e.msg}</div>`}).join('')}
 
 function marketSignalFor(i,meanScore,spread){
   const a=agents[i],lb=LB[i],d=a.brain.lastDecision;
@@ -728,63 +833,60 @@ function updateMarketPrices(){
   const spread=Math.sqrt(scores.reduce((s,v)=>s+(v-mean)*(v-mean),0)/scores.length)||1;
   const raws=CFG.map((_,i)=>marketSignalFor(i,mean,spread));
   const rawAvg=raws.reduce((s,v)=>s+v,0)/raws.length;
-  raws.forEach((raw,i)=>{
-    const m=market[i];
-    m.prev=m.price;
-    const normalized=raw*(100/rawAvg);
-    m.target=clamp(normalized,40,215);
-    const diff=(m.target-m.price)/m.price;
-    const move=clamp(diff*0.18 + m.momentum*0.15 + rand(0.006),-0.035,0.035);
-    m.price=clamp(m.price*(1+move),22,260);
-    m.momentum=clamp(m.momentum*0.65+move*0.9,-0.08,0.08);
-    m.eventBoost*=0.93;
-    m.signal=m.target;
-    if(tick%HISTORY_EVERY===0){m.hist.push(m.price);if(m.hist.length>160)m.hist.shift()}
-  });
+  raws.forEach((raw,i)=>{const m=market[i];m.prev=m.price;const normalized=raw*(100/rawAvg);m.target=clamp(normalized,40,215);const diff=(m.target-m.price)/m.price;const move=clamp(diff*0.18 + m.momentum*0.15 + rand(0.006),-0.035,0.035);m.price=clamp(m.price*(1+move),22,260);m.momentum=clamp(m.momentum*0.65+move*0.9,-0.08,0.08);m.eventBoost*=0.93;m.signal=m.target;if(tick%HISTORY_EVERY===0){m.hist.push(m.price);if(m.hist.length>160)m.hist.shift()}});
   updatePortfolioStats();
 }
-function updatePortfolioStats(){
-  investors.forEach(inv=>{inv.netWorth=Math.round(investorNetWorth(inv));inv.pnl=Math.round(inv.netWorth-1000);if(tick%HISTORY_EVERY===0){inv.history.push(inv.netWorth);if(inv.history.length>160)inv.history.shift();}})
-}
+function updatePortfolioStats(){investors.forEach(inv=>{inv.netWorth=Math.round(investorNetWorth(inv));inv.pnl=Math.round(inv.netWorth-1000);if(tick%HISTORY_EVERY===0){inv.history.push(inv.netWorth);if(inv.history.length>160)inv.history.shift();}})}
 
 function settleRound(){
   const ranking=[...agents].sort((a,b)=>b.roundScore()-a.roundScore());
-  ranking.forEach((a,idx)=>{LB[a.id].lastRank=idx+1;LB[a.id].roundScore=a.roundScore();if(idx===0)LB[a.id].wins++;});
+  ranking.forEach((a,idx)=>{LB[a.id].lastRank=idx+1;LB[a.id].roundScore=a.roundScore();if(idx===0)LB[a.id].wins++});
   const swing=[1.09,1.05,1.02,0.99,0.97,0.94];
-  ranking.forEach((a,idx)=>{market[a.id].price=clamp(market[a.id].price*swing[idx],22,260);market[a.id].eventBoost+=(idx===0?16:idx===1?8:idx===2?3:-2);});
-  bellAudio();
+  ranking.forEach((a,idx)=>{market[a.id].price=clamp(market[a.id].price*swing[idx],22,260);market[a.id].eventBoost+=(idx===0?16:idx===1?8:idx===2?3:-2)});
   const top=ranking.slice(0,3).map((a,i)=>`${i+1}. ${CFG[a.id].name}`);
   document.getElementById('podium').innerHTML=`<div class="card"><div style="color:#ffd76a;font-size:9px;letter-spacing:1px">ROUND ${roundNo} PODIUM</div><div style="margin-top:4px;line-height:1.5">${top.map((t,i)=>`<div style="color:${CFG[ranking[i].id].col}">${t} · ${ranking[i].roundScore()} pts · ${i===0?'+9%':i===1?'+5%':'+2%'} stock</div>`).join('')}</div></div>`;
   addEvent(ranking[0].id,'ROUND '+roundNo+' WINNER');
-  brains.forEach((b,i)=>{
-    const rank=LB[i].lastRank;const reward=(7-rank)*0.008;
-    b.w[1]=clamp(b.w[1]+(rank>3?0.01:-0.003),0.02,0.98);
-    b.w[2]=clamp(b.w[2]+(rank<=2?0.008:-0.004),0.02,0.98);
-    b.w[3]=clamp(b.w[3]+(agents[i].rFeeds>agents[i].rPoisonHits?0.006:-0.003),0.02,0.98);
-    b.w[4]=clamp(b.w[4]+(agents[i].rPoisonHits>0?0.006:-0.003),0.02,0.98);
-    b.w[5]=clamp(b.w[5]+(rank>4?0.007:-0.002),0.02,0.98);
-    b.w[0]=clamp(b.w[0]+reward+rand(0.01),0.02,0.98);
-    b.phil=getPhil(b.w);
-  });
+  brains.forEach((b,i)=>{const rank=LB[i].lastRank;const reward=(7-rank)*0.008;b.w[1]=clamp(b.w[1]+(rank>3?0.01:-0.003),0.02,0.98);b.w[2]=clamp(b.w[2]+(rank<=2?0.008:-0.004),0.02,0.98);b.w[3]=clamp(b.w[3]+(agents[i].rFeeds>agents[i].rPoisonHits?0.006:-0.003),0.02,0.98);b.w[4]=clamp(b.w[4]+(agents[i].rPoisonHits>0?0.006:-0.003),0.02,0.98);b.w[5]=clamp(b.w[5]+(rank>4?0.007:-0.002),0.02,0.98);b.w[0]=clamp(b.w[0]+reward+rand(0.01),0.02,0.98);b.phil=getPhil(b.w)});
   agents.forEach(a=>a.resetRoundStats());
+  investors.forEach(learnInvestor);
   roundNo++;
   updatePortfolioStats();
+  if(checkWinCondition())return;
+  resetForSetup();
   renderAllPanels();
 }
-function maybeAdvanceRound(){if(roundTick()>=ROUND_LEN)settleRound();}
+function checkWinCondition(){
+  const a=investors[0],b=investors[1];
+  if(a.netWorth>=TARGET_NET || a.netWorth>=b.netWorth*2){winnerText=`${a.name} WINS — ${a.netWorth}★ vs ${b.netWorth}★`;phase='gameover';paused=true;syncPauseUI();renderAllPanels();return true}
+  if(b.netWorth>=TARGET_NET || b.netWorth>=a.netWorth*2){winnerText=`${b.name} WINS — ${b.netWorth}★ vs ${a.netWorth}★`;phase='gameover';paused=true;syncPauseUI();renderAllPanels();return true}
+  return false;
+}
+function maybeAdvanceRound(){if(roundTick()>=ROUND_LEN)settleRound()}
 
-function addEvent(id,msg){
-  events.push({id,msg,at:Date.now()});if(events.length>7)events.shift();
-  document.getElementById('event-log').innerHTML=events.map(e=>`<div class="ev" style="color:${CFG[e.id].col};text-shadow:0 0 10px rgba(${CFG[e.id].cR},0.18)">${CFG[e.id].name}: ${e.msg}</div>`).join('');
+function learnInvestor(inv){
+  const roundReturn=(inv.netWorth-inv.entryNet)/Math.max(1,inv.entryNet);
+  inv.lastRoundReturn=roundReturn;
+  const weights=inv.lockedWeights||[];
+  let topPick=0,bestWeight=-1;
+  for(let i=0;i<CFG.length;i++)if((weights[i]||0)>bestWeight){bestWeight=weights[i]||0;topPick=i}
+  for(let i=0;i<CFG.length;i++){
+    const assetRet=(market[i].price-inv.roundEntryPrices[i])/Math.max(1,inv.roundEntryPrices[i]);
+    inv.memory.tilt[i]=clamp((inv.memory.tilt[i]||0)*0.72 + assetRet*(weights[i]||0)*10,-1.5,1.5);
+  }
+  inv.memory.confidence=clamp(inv.memory.confidence*0.65 + (0.5+roundReturn*3)*0.35,0.05,1.15);
+  inv.memory.cashBias=clamp((inv.memory.cashBias||0)*0.75 + (roundReturn<0?0.15:-0.06),-0.8,1.8);
+  const note=(roundReturn>=0?'+':'')+(roundReturn*100).toFixed(1)+'% round; strongest hold '+CFG[topPick].name;
+  inv.lastRoundNote=note;
+  inv.memory.notes.push(note); if(inv.memory.notes.length>6)inv.memory.notes.shift();
 }
 
 function renderCards(){
-  const invA=investors[0],invB=investors[1],cur=activeInvestor();
+  const invA=investors[0],invB=investors[1],cur=phase==='setup'?currentSetupInvestor():investors[activeTrader];
   document.getElementById('agent-cards').innerHTML=agents.map((a,i)=>{
-    const c=CFG[i],b=a.brain,ph=b.phil||getPhil(b.w),dec=b.lastDecision;const rank=currentRankFor(i);const pulsePct=clamp(1-a.releaseCd/a.releaseEvery,0,1)*100;const tags=dominantTags(a);
-    const pct=percentChange(i),pctCol=pct>=0?'#18d26e':'#ff5b5b';const price=market[i].price.toFixed(1);
-    const youAlloc=allocation(invA,i),rivAlloc=allocation(invB,i),actAlloc=allocation(cur,i),actShares=cur.shares[i];
-    const trustHtml=CFG.map((c2,j)=>{if(j===i)return'';const tv=b.trust[j];return`<span style="color:${tv>0.3?c2.col:tv<-0.1?'#ff6c6c':'#5e688f'}">${c2.name.slice(0,3)}:${tv.toFixed(1)}</span>`}).join(' ');
+    const c=CFG[i],b=a.brain,ph=b.phil||getPhil(b.w),dec=b.lastDecision,rank=currentRankFor(i),pulsePct=clamp(1-a.releaseCd/a.releaseEvery,0,1)*100,tags=dominantTags(a);
+    const pct=percentChange(i),pctCol=pct>=0?'#18d26e':'#ff5b5b',price=market[i].price.toFixed(1);
+    const youAlloc=allocation(invA,i),rivAlloc=allocation(invB,i),actAlloc=cur?allocation(cur,i):0;
+    const trustHtml=CFG.map((c2,j)=>{if(j===i)return'';const tv=b.trust[j];return `<span style="color:${tv>0.3?c2.col:tv<-0.1?'#ff6c6c':'#5e688f'}">${c2.name.slice(0,3)}:${tv.toFixed(1)}</span>`}).join(' ');
     const wBars=b.w.map((v,j)=>`<div class="tt-row"><span>${wLabel(j)}</span><span class="tt-val">${(v*100)|0}%</span></div><div class="tt-bar"><div class="tt-fill" style="width:${v*100}%;background:${c.col}"></div></div>`).join('');
     return `<div class="ac ${a.alive?'':'dead'}" style="border-left:2px solid ${c.col}${a.alive?'':'44'}">
       <div class="tt">
@@ -794,22 +896,15 @@ function renderCards(){
         <div class="tt-row"><span>Round score</span><span class="tt-val">${a.roundScore()}</span></div>
         <div class="tt-row"><span>Total wins</span><span class="tt-val">${LB[i].wins}</span></div>
         <div class="tt-row"><span>Pulse</span><span class="tt-val">${a.releaseCd}/${a.releaseEvery}</span></div>
-        <div class="tt-sec">NEURAL WEIGHTS</div>
-        ${wBars}
-        <div class="tt-sec">TRUST</div>
-        <div style="font-size:8px">${trustHtml}</div>
-        <div class="tt-sec">PORTFOLIO</div>
-        <div style="font-size:8px;color:#8f99cd">${investors[0].name}: ${(youAlloc*100).toFixed(1)}% · ${invA.shares[i].toFixed(2)} sh</div>
-        <div style="font-size:8px;color:#8f99cd">${investors[1].name}: ${(rivAlloc*100).toFixed(1)}% · ${invB.shares[i].toFixed(2)} sh</div>
-        <div class="tt-sec">INTENT</div>
-        <div style="font-size:8px;color:#8f99cd">${dec.kind} · ${(dec.confidence*100)|0}% · ${dec.why}</div>
-        <div class="tt-sec">PHILOSOPHY</div>
-        <div style="font-size:8px;color:#8893c5;font-style:italic">${ph.desc}</div>
+        <div class="tt-sec">NEURAL WEIGHTS</div>${wBars}
+        <div class="tt-sec">TRUST</div><div style="font-size:8px">${trustHtml}</div>
+        <div class="tt-sec">PORTFOLIO EXPOSURE</div>
+        <div style="font-size:8px;color:#8f99cd">${investors[0].name}: ${(youAlloc*100).toFixed(1)}%</div>
+        <div style="font-size:8px;color:#8f99cd">${investors[1].name}: ${(rivAlloc*100).toFixed(1)}%</div>
+        <div class="tt-sec">INTENT</div><div style="font-size:8px;color:#8f99cd">${dec.kind} · ${(dec.confidence*100)|0}% · ${dec.why}</div>
+        <div class="tt-sec">PHILOSOPHY</div><div style="font-size:8px;color:#8893c5;font-style:italic">${ph.desc}</div>
       </div>
-      <div class="ac-head">
-        <div class="ac-name"><span class="dot" style="background:${c.col};box-shadow:0 0 5px ${c.col}"></span>${c.name} ${a.alive?'':'☠'}</div>
-        <span class="ac-phil">${ph.name}</span>
-      </div>
+      <div class="ac-head"><div class="ac-name"><span class="dot" style="background:${c.col};box-shadow:0 0 5px ${c.col}"></span>${c.name} ${a.alive?'':'☠'}</div><span class="ac-phil">${ph.name}</span></div>
       <div class="ac-stats"><span>HP:${a.hp|0}</span><span>E:${a.energy|0}</span><span>${a.rKills}K</span><span>#${rank}</span></div>
       <div class="ac-bar"><div class="ac-bar-fill" style="width:${a.hp}%;background:${a.hp<30?'#f44':'#39d27b'}"></div></div>
       <div class="ac-bar"><div class="ac-bar-fill" style="width:${a.energy/a.maxEnergy*100}%;background:${a.energy<60?'#ff9d43':'#2ab4ff'}"></div></div>
@@ -817,109 +912,140 @@ function renderCards(){
       <div class="pulse-row"><span>PULSE ${a.releaseCd}</span><span>${a.lastPulse}</span></div>
       <div class="ac-bar"><div class="ac-bar-fill" style="width:${pulsePct}%;background:${dec.kind==='POISON'?'#ff5a73':'#6ef6ac'}"></div></div>
       ${a.allyId>=0?`<div class="ac-ally">⚐ ally <span style="background:${CFG[a.allyId].col}22;color:${CFG[a.allyId].col};border-color:${CFG[a.allyId].col}44">${CFG[a.allyId].name}</span></div>`:''}
-      <div class="hint-bars">
-        <div class="hint-col"><div class="hint-lbl">food</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.food*45)}%;background:#6ef6ac"></div></div></div>
-        <div class="hint-col"><div class="hint-lbl">poison</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.poison*45)}%;background:#ff6c82"></div></div></div>
-      </div>
+      <div class="hint-bars"><div class="hint-col"><div class="hint-lbl">food</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.food*45)}%;background:#6ef6ac"></div></div></div><div class="hint-col"><div class="hint-lbl">poison</div><div class="ac-bar"><div class="ac-bar-fill" style="width:${Math.min(100,dec.poison*45)}%;background:#ff6c82"></div></div></div></div>
       <div class="brain-row"><span class="brain-tag">${tags[0]}</span><span class="brain-tag">${tags[1]}</span></div>
       <div class="rank-row"><span>score ${a.roundScore()}</span><span>wins ${LB[i].wins}</span></div>
-      <div class="hold-row"><span>${cur.name}: ${(actAlloc*100).toFixed(1)}%</span><span>${actShares.toFixed(2)} sh</span></div>
-      <div class="intent" style="border-color:${toneForIntent(dec.kind)}33">
-        <b style="color:${toneForIntent(dec.kind)}">${dec.kind}</b> ${(dec.confidence*100)|0}% — ${a.intentText}
-        <span class="intent-target">why: ${dec.why}</span>
-      </div>
-      <div class="trade-area">
-        <button class="trade-btn sell" data-trade="sell" data-stock="${i}">SELL ${(tradeStep*100)|0}%</button>
-        <button class="trade-btn" data-trade="buy" data-stock="${i}">BUY ${(tradeStep*100)|0}%</button>
+      <div class="hold-row"><span>${cur?cur.name:'ACTIVE'} exposure</span><span>${(actAlloc*100).toFixed(1)}%</span></div>
+      <div class="intent" style="border-color:${toneForIntent(dec.kind)}33"><b style="color:${toneForIntent(dec.kind)}">${dec.kind}</b> ${(dec.confidence*100)|0}% — ${a.intentText}<span class="intent-target">why: ${dec.why}</span></div>
+      <div class="exposure">
         <span class="pill">${market[i].signal.toFixed(0)} fair</span>
         <span class="owner-pill">${investors[0].name} ${(youAlloc*100).toFixed(0)}%</span>
         <span class="owner-pill rival">${investors[1].name} ${(rivAlloc*100).toFixed(0)}%</span>
+        <span class="signal-pill">gap ${((valuationGap(i))*100).toFixed(0)}%</span>
       </div>
     </div>`;
   }).join('');
 }
 
-function liveRankings(){return [...agents].sort((a,b)=>b.roundScore()-a.roundScore())}
-function currentRankFor(id){return liveRankings().findIndex(a=>a.id===id)+1}
-
+function renderStrategySelector(inv,idx){
+  return `<div class="strategy-grid">${STRATEGIES.map(s=>`<div class="strategy-chip ${inv.strategyId===s.id?'sel':''}" onclick="strategySelectable(${idx},'${s.id}')"><b>${s.name}</b>${s.desc}</div>`).join('')}</div>`;
+}
 function renderMarketBoard(){
-  const a=activeInvestor(),b=investors[1-activeTrader];const fill=clamp(roundTick()/ROUND_LEN,0,1)*100;const lead=marketLeader();
+  const active=phase==='setup'?currentSetupInvestor():activeInvestor(),other=investors[1-(phase==='setup'?setupCursor:activeTrader)],lead=marketLeader();
+  const fill=clamp(roundTick()/ROUND_LEN,0,1)*100;
+  const activeIdx=phase==='setup'?setupCursor:activeTrader;
   document.getElementById('market-board').innerHTML=`
-    <div class="row"><span>ROUND ${roundNo}</span><span id="accent">${Math.max(0,ROUND_LEN-roundTick())} ticks</span></div>
-    <div class="meter"><div class="fill" style="width:${fill}%"></div></div>
-    <div class="row"><span>active trader</span><span style="color:${a.color}">${a.name}</span></div>
-    <div class="row"><span>cash / net</span><span>${Math.round(a.cash)}★ / ${a.netWorth}★</span></div>
+    <div class="row"><span>ROUND ${roundNo}</span><span id="accent">${phase==='run'?Math.max(0,ROUND_LEN-roundTick())+' ticks':'setup'}</span></div>
+    <div class="meter"><div class="fill" style="width:${phase==='run'?fill:0}%"></div></div>
+    <div class="row"><span>phase</span><span style="color:${phase==='setup'?'#ffd76a':phase==='gameover'?'#ff9b66':'#9fd0ff'}">${phase.toUpperCase()}</span></div>
+    <div class="row"><span>active investor</span><span style="color:${active.color}">${active.name}</span></div>
+    <div class="row"><span>strategy</span><span style="color:#d4b3ff">${strategyMeta(active.strategyId).name}</span></div>
+    <div class="row"><span>cash / net</span><span>${Math.round(active.cash)}★ / ${active.netWorth}★</span></div>
     <div class="row"><span>leader</span><span style="color:${investors[lead].color}">${investors[lead].name}</span></div>
-    <div class="row"><span>pricing</span><span>wins + live form + reversion</span></div>
-    <div style="font-size:8px;color:#93a0d5;line-height:1.5;margin-top:6px">Each name has a live share price. Clicking BUY or SELL triggers a trading halt so the board freezes while you place orders. Price is anchored to accumulated wins, but only moves a few percent per update, so one lucky spike cannot dominate forever.</div>
-    <div class="mode-btns">
+    <div class="row"><span>win rule</span><span>5000★ or 2× rival</span></div>
+    <div style="font-size:8px;color:#93a0d5;line-height:1.5;margin-top:6px">Manual players drag the wheel. Auto doctrines compute weights from arena signals and learn from results. Once both sides commit, allocations stay locked for the full 1000-tick run.</div>
+    ${phase==='setup'?`<div style="margin-top:6px;font-size:8px;color:#8f99cd">Choose doctrine for ${active.name}${selectedMode==='pvp'?' and commit when ready.':''}</div>${renderStrategySelector(active,activeIdx)}`:''}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+      <button class="go-main" onclick="commitSetup()" ${phase!=='setup'?'disabled':''}>${selectedMode==='pvp'&&phase==='setup'&&setupCursor===0?'LOCK PLAYER A':'LOCK ROUND'}</button>
       <button class="${selectedMode==='ai'?'sel':''}" onclick="setMode('ai');syncModeUI()">YOU vs AI</button>
       <button class="${selectedMode==='pvp'?'sel':''}" onclick="setMode('pvp');syncModeUI()">2 PLAYER</button>
-      ${selectedMode==='pvp'?`<button class="sel" onclick="switchTrader()">SWITCH → ${b.name}</button>`:''}
-    </div>`;
+      ${selectedMode==='pvp'&&phase==='setup'?`<button onclick="switchTrader()">SWITCH → ${other.name}</button>`:''}
+    </div>
+    ${winnerText?`<div class="win-banner">${winnerText}</div>`:''}`;
 }
 function syncModeUI(){
   applyInvestorNames();
   document.getElementById('mode-chip').textContent=selectedMode==='ai'?'YOU vs AI':'HOT SEAT';
-  document.getElementById('switch-btn').style.display=selectedMode==='pvp'?'inline-block':'none';
+  document.getElementById('switch-btn').style.display=(selectedMode==='pvp'&&phase==='setup')?'inline-block':'none';
   document.getElementById('opponent-label').innerHTML=(selectedMode==='ai'?'RIVAL NET: ':'PLAYER B NET: ')+'<span id="opp-worth" style="color:#9fd0ff">'+investors[1].netWorth+'</span>';
+  if(selectedMode==='ai'){investors[1].strategyId = investors[1].strategyId==='manual' ? 'momentum' : investors[1].strategyId}
   renderAllPanels();
 }
 
 function renderPortfolioPanels(){
   document.getElementById('portfolio-panels').innerHTML=investors.map((inv,idx)=>{
-    const total=investorNetWorth(inv);const holdings=CFG.map((c,i)=>({i,val:holdingValue(inv,i),alloc:allocation(inv,i)})).filter(h=>h.val>1).sort((a,b)=>b.val-a.val).slice(0,3);
+    const total=investorNetWorth(inv);const weights=displayWeightsFor(inv,idx);const top=CFG.map((c,i)=>({i,w:weights[i]||0})).sort((a,b)=>b.w-a.w).slice(0,3);
     return `<div class="portfolio-card" style="border-color:${inv.color}33;background:linear-gradient(180deg,${inv.color}08,rgba(255,255,255,.015))">
-      <div class="row"><span style="color:${inv.color};font-size:11px;letter-spacing:1px">${inv.name}</span><span>${idx===activeTrader?'<span id="accent">ACTIVE</span>':''}</span></div>
+      <div class="row"><span style="color:${inv.color};font-size:11px;letter-spacing:1px">${inv.name}</span><span>${(phase==='setup'?setupCursor:activeTrader)===idx?'<span id="accent">ACTIVE</span>':''}</span></div>
+      <div class="row"><span>strategy</span><span style="color:#d4b3ff">${strategyMeta(inv.strategyId).name}</span></div>
       <div class="row"><span>cash</span><span>${Math.round(inv.cash)}★</span></div>
       <div class="row"><span>net worth</span><span>${inv.netWorth}★</span></div>
       <div class="row"><span>return</span><span style="color:${inv.pnl>=0?'#18d26e':'#ff5b5b'}">${inv.pnl>=0?'+':''}${inv.pnl}★</span></div>
-      <div class="row"><span>trades</span><span>${inv.trades}</span></div>
-      <div style="margin-top:5px;font-size:8px;color:#8f99cd">${holdings.length?holdings.map(h=>`<div class="row"><span style="color:${CFG[h.i].col}">${CFG[h.i].name}</span><span>${(h.alloc*100).toFixed(1)}%</span></div>`).join(''):'all cash'}</div>
+      <div class="row"><span>round note</span><span style="font-size:8px;color:#a8b4e8">${inv.lastRoundNote}</span></div>
+      <div style="margin-top:5px;font-size:8px;color:#8f99cd">${top.map(h=>`<div class="row"><span style="color:${CFG[h.i].col}">${CFG[h.i].name}</span><span>${(h.w*100).toFixed(1)}%</span></div>`).join('')}<div class="row"><span>CASH</span><span>${((weights[6]||0)*100).toFixed(1)}%</span></div></div>
     </div>`;
   }).join('');
 }
-
 function renderLB(){
   const sorted=[...CFG.keys()].map(i=>({id:i,price:market[i].price,chg:percentChange(i),wins:LB[i].wins,score:agents[i].roundScore()})).sort((a,b)=>(b.price+b.wins*3+b.score*0.04)-(a.price+a.wins*3+a.score*0.04));
   document.getElementById('lb').innerHTML=sorted.map((e,i)=>`<div class="lb-row"><span class="r">#${i+1}</span><div style="flex:1"><span style="color:${CFG[e.id].col};font-size:9px">${CFG[e.id].name}</span><div class="lb-meta">${e.wins}W · score ${e.score}</div></div><span style="color:${e.chg>=0?'#18d26e':'#ff5b5b'}">${market[e.id].price.toFixed(1)}★</span></div>`).join('');
 }
-function renderPhils(){
-  document.getElementById('phil-list').innerHTML=agents.map((a,i)=>{const c=CFG[i],ph=a.brain.phil||getPhil(a.brain.w);const hist=a.brain.philHist.slice(-4).join(' → ');return `<div class="phil-row" style="border-color:${c.col}22"><div class="phil-name" style="color:${c.col}">${c.name}: ${ph.name}</div><div class="phil-text">${ph.desc}</div><div class="phil-traits">${hist||'no drift yet'}</div></div>`;}).join('');
-}
-function renderBrainList(){
-  const ranking=liveRankings().slice(0,4);
-  document.getElementById('brain-list').innerHTML=ranking.map(a=>{const c=CFG[a.id],d=a.brain.lastDecision;const target=d.target>=0?CFG[d.target].name:(d.kind==='FOOD'?'lane':'trap');return `<div class="brain-row-panel" style="border-color:${c.col}22"><div class="brain-name" style="color:${c.col}">${c.name} · ${d.kind}</div><div class="brain-text">${d.why}. ${(d.confidence*100)|0}% confidence toward ${target}.</div><div class="brain-micro">pulse ${a.releaseCd}/${a.releaseEvery} · score ${a.roundScore()} · stock ${market[a.id].price.toFixed(1)}★</div></div>`;}).join('');
-}
+function renderPhils(){document.getElementById('phil-list').innerHTML=agents.map((a,i)=>{const c=CFG[i],ph=a.brain.phil||getPhil(a.brain.w),hist=a.brain.philHist.slice(-4).join(' → ');return `<div class="phil-row" style="border-color:${c.col}22"><div class="phil-name" style="color:${c.col}">${c.name}: ${ph.name}</div><div class="phil-text">${ph.desc}</div><div class="phil-traits">${hist||'no drift yet'}</div></div>`;}).join('')}
+function renderBrainList(){const ranking=liveRankings().slice(0,4);document.getElementById('brain-list').innerHTML=ranking.map(a=>{const c=CFG[a.id],d=a.brain.lastDecision,target=d.target>=0?CFG[d.target].name:(d.kind==='FOOD'?'lane':'trap');return `<div class="brain-row-panel" style="border-color:${c.col}22"><div class="brain-name" style="color:${c.col}">${c.name} · ${d.kind}</div><div class="brain-text">${d.why}. ${(d.confidence*100)|0}% confidence toward ${target}.</div><div class="brain-micro">pulse ${a.releaseCd}/${a.releaseEvery} · score ${a.roundScore()} · stock ${market[a.id].price.toFixed(1)}★</div></div>`;}).join('')}
 function renderTxLog(){
-  document.getElementById('tx-log').innerHTML=tradeLog.slice(-14).reverse().map(t=>{const inv=investors[t.who],c=CFG[t.id],col=t.kind==='BUY'?'#9fd0ff':'#ff9cb0';return `<div class="tx-row"><span style="color:${inv.color}">${inv.name}</span><span style="color:${c.col};flex:1;text-align:center">${c.name}</span><span style="color:${col}">${t.kind} ${Math.round(t.amt)}★</span></div>`;}).join('')||'<div style="font-size:8px;color:#5c688e">no trades yet</div>';
+  document.getElementById('tx-log').innerHTML=roundLog.slice(-12).reverse().map(t=>{const inv=investors[t.who];const top=t.weights.slice(0,6).map((w,i)=>({i,w})).sort((a,b)=>b.w-a.w)[0];return `<div class="tx-row"><span style="color:${inv.color}">${inv.name}</span><span style="color:#d4b3ff">${t.strategy}</span><span>${CFG[top.i].name} ${(top.w*100).toFixed(0)}%</span><span>${t.net}★</span></div>`}).join('')||'<div style="font-size:8px;color:#5c688e">no locked rounds yet</div>';
 }
 function drawPortfolioChart(){
-  PX.clearRect(0,0,PC.width,PC.height);
-  PX.fillStyle='#07070f';PX.fillRect(0,0,PC.width,PC.height);
-  const lines=[investors[0].history,investors[1].history,market[0].hist.map((_,idx)=>1000*(market.reduce((s,m)=>s+(m.hist[idx]||m.price),0)/CFG.length)/100)];
+  PX.clearRect(0,0,PC.width,PC.height);PX.fillStyle='#07070f';PX.fillRect(0,0,PC.width,PC.height);
+  const lines=[investors[0].history,investors[1].history,market[0].hist.map((_,idx)=>marketIndexAtHistory(idx))];
   const vals=lines.flat();if(vals.length<2)return;
   const min=Math.min(...vals),max=Math.max(...vals),range=Math.max(1,max-min),pad=10;
-  for(let i=0;i<4;i++){const y=pad+i*(PC.height-pad*2)/3;PX.strokeStyle='rgba(40,40,70,.45)';PX.beginPath();PX.moveTo(0,y);PX.lineTo(PC.width,y);PX.stroke();}
+  for(let i=0;i<4;i++){const y=pad+i*(PC.height-pad*2)/3;PX.strokeStyle='rgba(40,40,70,.45)';PX.beginPath();PX.moveTo(0,y);PX.lineTo(PC.width,y);PX.stroke()}
   const specs=[{arr:investors[0].history,col:investors[0].color},{arr:investors[1].history,col:investors[1].color},{arr:lines[2],col:'#6fe0a8'}];
-  specs.forEach(sp=>{if(sp.arr.length<2)return;PX.beginPath();sp.arr.forEach((v,i)=>{const x=pad+i*(PC.width-pad*2)/Math.max(1,sp.arr.length-1);const y=PC.height-pad-((v-min)/range)*(PC.height-pad*2);if(i===0)PX.moveTo(x,y);else PX.lineTo(x,y);});PX.strokeStyle=sp.col;PX.lineWidth=1.6;PX.stroke();});
-  PX.fillStyle=investors[0].color;PX.font='9px Courier New';PX.fillText(investors[0].name,8,12);PX.fillStyle=investors[1].color;PX.fillText(investors[1].name,84,12);PX.fillStyle='#6fe0a8';PX.fillText('INDEX',175,12);
+  specs.forEach(sp=>{if(sp.arr.length<2)return;PX.beginPath();sp.arr.forEach((v,i)=>{const x=pad+i*(PC.width-pad*2)/Math.max(1,sp.arr.length-1);const y=PC.height-pad-((v-min)/range)*(PC.height-pad*2);if(i===0)PX.moveTo(x,y);else PX.lineTo(x,y)});PX.strokeStyle=sp.col;PX.lineWidth=1.6;PX.stroke()});
+  PX.fillStyle=investors[0].color;PX.font='9px Courier New';PX.fillText(investors[0].name,8,12);PX.fillStyle=investors[1].color;PX.fillText(investors[1].name,92,12);PX.fillStyle='#6fe0a8';PX.fillText('INDEX',200,12);
 }
 
-function renderAllPanels(){renderCards();renderMarketBoard();renderPortfolioPanels();renderLB();renderBrainList();renderPhils();renderTxLog();drawPortfolioChart();updateUI();}
+function drawAllocationWheel(){
+  const inv=phase==='setup'?currentSetupInvestor():activeInvestor();
+  if(!inv)return;
+  const weights=displayWeightsFor(inv,phase==='setup'?setupCursor:activeTrader);
+  const cx=AC.width/2,cy=AC.height/2,outer=108,cashR=34;
+  AX.clearRect(0,0,AC.width,AC.height);AX.fillStyle='#07070f';AX.fillRect(0,0,AC.width,AC.height);
+  const halo=clamp(inv.netWorth/TARGET_NET,0,1);
+  AX.beginPath();AX.arc(cx,cy,cashR+18+halo*24,0,Math.PI*2);AX.strokeStyle=`rgba(255,215,0,${0.15+halo*0.5})`;AX.lineWidth=6;AX.stroke();
+  AX.beginPath();AX.arc(cx,cy,outer,0,Math.PI*2);AX.strokeStyle='rgba(64,70,110,.5)';AX.lineWidth=1.5;AX.stroke();
+  for(let i=0;i<6;i++){
+    const angle=-Math.PI/2 + i*(Math.PI*2/6);
+    const ex=cx+Math.cos(angle)*outer, ey=cy+Math.sin(angle)*outer;
+    AX.strokeStyle='rgba(60,65,100,.45)';AX.lineWidth=1;AX.beginPath();AX.moveTo(cx,cy);AX.lineTo(ex,ey);AX.stroke();
+    const wr=weights[i]||0;const hr=cashR+10+wr*(outer-cashR-18);const hx=cx+Math.cos(angle)*hr, hy=cy+Math.sin(angle)*hr;
+    const g=AX.createLinearGradient(cx,cy,ex,ey);g.addColorStop(0,CFG[i].col+'33');g.addColorStop(1,CFG[i].col);
+    AX.strokeStyle=g;AX.lineWidth=6;AX.beginPath();AX.moveTo(cx+Math.cos(angle)*(cashR+4),cy+Math.sin(angle)*(cashR+4));AX.lineTo(hx,hy);AX.stroke();
+    AX.fillStyle=CFG[i].col;AX.beginPath();AX.arc(hx,hy,7,0,Math.PI*2);AX.fill();
+    AX.fillStyle='#d5def8';AX.font='9px Courier New';AX.textAlign=Math.cos(angle)>0.25?'left':Math.cos(angle)<-0.25?'right':'center';AX.textBaseline=Math.sin(angle)>0.6?'top':Math.sin(angle)<-0.6?'bottom':'middle';
+    AX.fillText(CFG[i].name+' '+(wr*100).toFixed(0)+'%',cx+Math.cos(angle)*(outer+18),cy+Math.sin(angle)*(outer+18));
+  }
+  AX.fillStyle='rgba(15,18,34,.96)';AX.beginPath();AX.arc(cx,cy,cashR,0,Math.PI*2);AX.fill();
+  AX.strokeStyle='rgba(255,215,0,.55)';AX.lineWidth=2;AX.beginPath();AX.arc(cx,cy,cashR,0,Math.PI*2);AX.stroke();
+  const cashWeight=weights[6]||0;const innerR=10+cashWeight*(cashR-12);
+  AX.fillStyle='rgba(255,215,0,.25)';AX.beginPath();AX.arc(cx,cy,innerR,0,Math.PI*2);AX.fill();
+  AX.fillStyle='#ffd76a';AX.font='bold 11px Courier New';AX.textAlign='center';AX.textBaseline='middle';AX.fillText('CASH',cx,cy-5);AX.font='10px Courier New';AX.fillText((cashWeight*100).toFixed(0)+'%',cx,cy+8);
+  AX.fillStyle='rgba(160,180,230,.85)';AX.font='8px Courier New';AX.fillText(phase==='setup'&&isManual(inv)?'each spoke changes only itself + cash':'live marked-to-market weights',cx,AC.height-14);
+  document.getElementById('wheel-investor').textContent=inv.name;
+  document.getElementById('wheel-investor').style.color=inv.color;
+  document.getElementById('wheel-strategy').textContent=strategyMeta(inv.strategyId).name;
+  document.getElementById('wheel-cash').textContent=((weights[6]||0)*100).toFixed(1)+'%';
+  document.getElementById('wheel-halo').textContent=inv.netWorth+'★';
+  document.getElementById('wheel-legend').innerHTML=CFG.map((c,i)=>`<div><b style="color:${c.col}">${c.name}</b>${(weights[i]*100).toFixed(1)}% allocation</div>`).join('')+`<div><b style="color:#ffd76a">CASH CORE</b>${(cashWeight*100).toFixed(1)}% dry powder</div><div><b>HALO</b>${Math.round(halo*100)}% of 5× target</div>`;
+}
+
+function renderAllPanels(){renderCards();renderMarketBoard();renderPortfolioPanels();renderLB();renderBrainList();renderPhils();renderTxLog();drawPortfolioChart();drawAllocationWheel();updateUI()}
 
 function updateUI(){
   updatePortfolioStats();
-  document.getElementById('cash').innerHTML='★ '+Math.round(activeInvestor().cash);
-  document.getElementById('net-worth').textContent=activeInvestor().netWorth;
-  const pnlEl=document.getElementById('pnl');pnlEl.textContent=(activeInvestor().pnl>=0?'+':'')+activeInvestor().pnl;pnlEl.style.color=activeInvestor().pnl>=0?'#17d86b':'#ff5e5e';
+  const cur=phase==='setup'?currentSetupInvestor():activeInvestor();
+  document.getElementById('cash').innerHTML='★ '+Math.round(cur.cash);
+  document.getElementById('net-worth').textContent=cur.netWorth;
+  const pnlEl=document.getElementById('pnl');pnlEl.textContent=(cur.pnl>=0?'+':'')+cur.pnl;pnlEl.style.color=cur.pnl>=0?'#17d86b':'#ff5e5e';
   document.getElementById('round-no').textContent=roundNo;
-  document.getElementById('opp-worth').textContent=investors[1-activeTrader].netWorth;
+  document.getElementById('opp-worth').textContent=investors[1-(phase==='setup'?setupCursor:activeTrader)].netWorth;
   document.getElementById('gen-ct').textContent='GEN '+generation;
   document.getElementById('tick-ct').textContent='TICK '+tick;
   document.getElementById('gen-badge').textContent='ROUND '+roundNo+' · GEN '+generation;
-  document.getElementById('round-pulse').textContent='ROUND '+roundNo+' · market open · '+(ROUND_LEN-roundTick())+' ticks left';
+  document.getElementById('round-pulse').textContent=phase==='setup'?'SETUP · choose strategy and lock weights':phase==='gameover'?'MATCH OVER · '+winnerText:'ROUND '+roundNo+' · locked market · '+(ROUND_LEN-roundTick())+' ticks left';
   document.getElementById('mode-chip').textContent=selectedMode==='ai'?'YOU vs AI':'HOT SEAT';
+  document.getElementById('phase-chip').textContent=phase==='setup'?'SETUP PHASE':phase==='run'?'LOCKED ROUND':'GAME OVER';
   syncPauseUI();
 }
 
@@ -928,76 +1054,84 @@ function draw(){
   X.strokeStyle='rgba(30,30,54,.28)';X.lineWidth=.5;
   for(let i=0;i<GW;i+=10){X.beginPath();X.moveTo(i*CL,0);X.lineTo(i*CL,CV.height);X.stroke()}
   for(let j=0;j<GH;j+=10){X.beginPath();X.moveTo(0,j*CL);X.lineTo(CV.width,j*CL);X.stroke()}
-  for(const d of drops){
-    d.age++;
-    if(d.type==='food'){
-      const pulse=.55+Math.sin((tick+d.x)/7)*.28;X.fillStyle=`rgba(70,235,120,${pulse})`;X.shadowColor='#0f4';X.shadowBlur=8;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL/2+1.4,0,6.28);X.fill();X.strokeStyle=CFG[d.by].col+'55';X.lineWidth=.7;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL+1.5,0,6.28);X.stroke();
-    }else{
-      const pulse=.5+Math.sin((tick+d.y)/5)*.32;X.fillStyle=`rgba(255,35,70,${pulse})`;X.shadowColor='#f22';X.shadowBlur=8;const cx=d.x*CL+CL/2,cy=d.y*CL+CL/2;X.beginPath();X.moveTo(cx,cy-CL/2-1);X.lineTo(cx+CL/2+1,cy);X.lineTo(cx,cy+CL/2+1);X.lineTo(cx-CL/2-1,cy);X.closePath();X.fill();X.strokeStyle=CFG[d.by].col+'44';X.lineWidth=.6;X.stroke();
-    }
-    X.shadowBlur=0;
-  }
-  X.setLineDash([3,5]);X.lineWidth=.9;
-  agents.forEach(a=>{if(!a.alive||a.allyId<0)return;const b=agents[a.allyId];if(!b||!b.alive)return;const g=X.createLinearGradient(a.x*CL,a.y*CL,b.x*CL,b.y*CL);g.addColorStop(0,CFG[a.id].col+'33');g.addColorStop(1,CFG[b.id].col+'33');X.strokeStyle=g;X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(b.x*CL+CL/2,b.y*CL+CL/2);X.stroke()});
-  X.setLineDash([]);
-  agents.forEach((a,idx)=>{
-    const c=CFG[idx],tl=a.trail.length;
-    for(let i=0;i<tl;i++){const age=(tl-i)/tl;X.fillStyle=c.cD+(0.08+age*0.44)+')';X.fillRect(a.trail[i].x*CL,a.trail[i].y*CL,CL,CL)}
-    if(!a.alive){for(let e=0;e<5;e++){const r=2+Math.random()*10,an=Math.random()*6.28;X.fillStyle=`rgba(${c.cR},${0.2+Math.random()*0.3})`;X.beginPath();X.arc(a.x*CL+CL/2+Math.cos(an)*r,a.y*CL+CL/2+Math.sin(an)*r,1+Math.random()*2,0,6.28);X.fill()}return}
-    X.strokeStyle=`rgba(${c.cR},0.055)`;X.lineWidth=.6;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,a.vision*CL,0,6.28);X.stroke();
-    const d=a.brain.lastDecision;
-    if(a.releaseCd<10){X.strokeStyle=toneForIntent(d.kind)+'55';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.6+Math.sin(tick/3)*2,0,6.28);X.stroke();if(d.target>=0&&agents[d.target]&&agents[d.target].alive){X.setLineDash([2,4]);X.strokeStyle=toneForIntent(d.kind)+'66';X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(agents[d.target].x*CL+CL/2,agents[d.target].y*CL+CL/2);X.stroke();X.setLineDash([])}}
-    if(investors.some(inv=>inv.shares[idx]>0.05)){X.strokeStyle='#ffd70033';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.1,0,6.28);X.stroke();}
-    X.shadowColor=c.col;X.shadowBlur=16;X.fillStyle=c.col;X.fillRect(a.x*CL-1,a.y*CL-1,CL+2,CL+2);X.shadowBlur=0;
-    const dd=DIRS[a.dir];for(let g=1;g<=3;g++){X.fillStyle=`rgba(${c.cR},${0.12-g*0.03})`;X.fillRect((a.x+dd[0]*g)*CL,(a.y+dd[1]*g)*CL,CL,CL)}
-    const bw=14,bx=a.x*CL+CL/2-bw/2,by=a.y*CL-5;X.fillStyle='rgba(0,0,0,.55)';X.fillRect(bx,by,bw,2);X.fillStyle=a.hp>50?'#0d0':a.hp>25?'#f80':'#f00';X.fillRect(bx,by,bw*a.hp/100,2);
-    X.fillStyle=toneForIntent(d.kind);X.fillRect(a.x*CL,a.y*CL+CL+1,Math.max(2,CL*(a.releaseEvery-a.releaseCd)/a.releaseEvery),1.5);
-  });
+  for(const d of drops){d.age++;if(d.type==='food'){const pulse=.55+Math.sin((tick+d.x)/7)*.28;X.fillStyle=`rgba(70,235,120,${pulse})`;X.shadowColor='#0f4';X.shadowBlur=8;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL/2+1.4,0,6.28);X.fill();X.strokeStyle=CFG[d.by].col+'55';X.lineWidth=.7;X.beginPath();X.arc(d.x*CL+CL/2,d.y*CL+CL/2,CL+1.5,0,6.28);X.stroke()}else{const pulse=.5+Math.sin((tick+d.y)/5)*.32;X.fillStyle=`rgba(255,35,70,${pulse})`;X.shadowColor='#f22';X.shadowBlur=8;const cx=d.x*CL+CL/2,cy=d.y*CL+CL/2;X.beginPath();X.moveTo(cx,cy-CL/2-1);X.lineTo(cx+CL/2+1,cy);X.lineTo(cx,cy+CL/2+1);X.lineTo(cx-CL/2-1,cy);X.closePath();X.fill();X.strokeStyle=CFG[d.by].col+'44';X.lineWidth=.6;X.stroke()}X.shadowBlur=0}
+  X.setLineDash([3,5]);X.lineWidth=.9;agents.forEach(a=>{if(!a.alive||a.allyId<0)return;const b=agents[a.allyId];if(!b||!b.alive)return;const g=X.createLinearGradient(a.x*CL,a.y*CL,b.x*CL,b.y*CL);g.addColorStop(0,CFG[a.id].col+'33');g.addColorStop(1,CFG[b.id].col+'33');X.strokeStyle=g;X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(b.x*CL+CL/2,b.y*CL+CL/2);X.stroke()});X.setLineDash([]);
+  agents.forEach((a,idx)=>{const c=CFG[idx],tl=a.trail.length;for(let i=0;i<tl;i++){const age=(tl-i)/tl;X.fillStyle=c.cD+(0.08+age*0.44)+')';X.fillRect(a.trail[i].x*CL,a.trail[i].y*CL,CL,CL)}if(!a.alive){for(let e=0;e<5;e++){const r=2+Math.random()*10,an=Math.random()*6.28;X.fillStyle=`rgba(${c.cR},${0.2+Math.random()*0.3})`;X.beginPath();X.arc(a.x*CL+CL/2+Math.cos(an)*r,a.y*CL+CL/2+Math.sin(an)*r,1+Math.random()*2,0,6.28);X.fill()}return}X.strokeStyle=`rgba(${c.cR},0.055)`;X.lineWidth=.6;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,a.vision*CL,0,6.28);X.stroke();const d=a.brain.lastDecision;if(a.releaseCd<10){X.strokeStyle=toneForIntent(d.kind)+'55';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.6+Math.sin(tick/3)*2,0,6.28);X.stroke();if(d.target>=0&&agents[d.target]&&agents[d.target].alive){X.setLineDash([2,4]);X.strokeStyle=toneForIntent(d.kind)+'66';X.beginPath();X.moveTo(a.x*CL+CL/2,a.y*CL+CL/2);X.lineTo(agents[d.target].x*CL+CL/2,agents[d.target].y*CL+CL/2);X.stroke();X.setLineDash([])}}if(investors.some(inv=>(allocation(inv,idx)>0.14))){X.strokeStyle='#ffd70033';X.lineWidth=1.2;X.beginPath();X.arc(a.x*CL+CL/2,a.y*CL+CL/2,CL*2.1,0,6.28);X.stroke()}X.shadowColor=c.col;X.shadowBlur=16;X.fillStyle=c.col;X.fillRect(a.x*CL-1,a.y*CL-1,CL+2,CL+2);X.shadowBlur=0;const dd=DIRS[a.dir];for(let g=1;g<=3;g++){X.fillStyle=`rgba(${c.cR},${0.12-g*0.03})`;X.fillRect((a.x+dd[0]*g)*CL,(a.y+dd[1]*g)*CL,CL,CL)}const bw=14,bx=a.x*CL+CL/2-bw/2,by=a.y*CL-5;X.fillStyle='rgba(0,0,0,.55)';X.fillRect(bx,by,bw,2);X.fillStyle=a.hp>50?'#0d0':a.hp>25?'#f80':'#f00';X.fillRect(bx,by,bw*a.hp/100,2);X.fillStyle=toneForIntent(d.kind);X.fillRect(a.x*CL,a.y*CL+CL+1,Math.max(2,CL*(a.releaseEvery-a.releaseCd)/a.releaseEvery),1.5)});
   for(let y=0;y<CV.height;y+=3){X.fillStyle='rgba(0,0,0,.035)';X.fillRect(0,y,CV.width,1)}
 }
 
-function decayDrops(){
-  for(let i=drops.length-1;i>=0;i--){drops[i].ttl--;if(drops[i].ttl<=0){const d=drops[i];if(d.by>=0&&brains[d.by]){if(d.type==='food')brains[d.by].w[3]=clamp(brains[d.by].w[3]-0.004,0.02,0.98);else brains[d.by].w[4]=clamp(brains[d.by].w[4]-0.004,0.02,0.98)}drops.splice(i,1)}}
-}
+function decayDrops(){for(let i=drops.length-1;i>=0;i--){drops[i].ttl--;if(drops[i].ttl<=0){const d=drops[i];if(d.by>=0&&brains[d.by]){if(d.type==='food')brains[d.by].w[3]=clamp(brains[d.by].w[3]-0.004,0.02,0.98);else brains[d.by].w[4]=clamp(brains[d.by].w[4]-0.004,0.02,0.98)}drops.splice(i,1)}}}
 
 function initArena(){
-  drops=[];events=[];tradeLog=[];tick=0;roundNo=1;generation=1;
-  market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name}));
+  drops=[];events=[];roundLog=[];tick=0;roundNo=1;generation=1;winnerText='';
+  market=CFG.map((c,i)=>({price:100,prev:100,target:100,eventBoost:0,momentum:0,hist:[100],signal:100,ticker:c.name,roundEntry:100}));
   initInvestors();
   const starts=[[15,20],[GW-16,20],[15,GH-21],[GW-16,GH-21],[GW/2|0,12],[GW/2|0,GH-13]];
-  agents=CFG.map((c,i)=>new Agent(i,starts[i][0],starts[i][1],1));brains.forEach(b=>{b.phil=getPhil(b.w)});document.getElementById('podium').innerHTML='';syncModeUI();updatePortfolioStats();
+  agents=CFG.map((c,i)=>new Agent(i,starts[i][0],starts[i][1],1));brains.forEach(b=>{b.phil=getPhil(b.w)});document.getElementById('podium').innerHTML='';resetForSetup();syncModeUI();updatePortfolioStats();
 }
 
 function gameStep(){
-  if(!gameRunning||paused)return;
+  if(!gameRunning||paused||phase!=='run')return;
   const alive=agents.filter(a=>a.alive);alive.forEach(a=>a.think(alive));decayDrops();tick++;maybeAdvanceRound();
-  if(tick%beatIntervalTicks()===0)beatAudioStep();
   if(tick%MARKET_UPDATE_EVERY===0)updateMarketPrices();
-  if(tick%AI_REBALANCE_EVERY===0)rebalanceAI();
   if(tick%HISTORY_EVERY===0)updatePortfolioStats();
+  if(checkWinCondition())return;
+  Sound.gameUpdate();
   draw();
   if(tick%3===0)renderCards();
   if(tick%18===0)renderAllPanels();
 }
 function loop(){if(!gameRunning)return;gameStep();if(speed<=1)requestAnimationFrame(loop);else setTimeout(()=>requestAnimationFrame(loop),speed)}
-function beginArena(){document.getElementById('start-ov').classList.add('hidden');resumeAudio();bellAudio();initArena();gameRunning=true;paused=false;syncPauseUI();renderAllPanels();loop();}
+function beginArena(){
+  document.getElementById('start-ov').classList.add('hidden');
+  initArena();gameRunning=true;paused=true;syncPauseUI();renderAllPanels();draw();
+  Sound.init();
+  loop();
+}
 
-document.getElementById('agent-cards').addEventListener('pointerdown',function(ev){
-  const btn=ev.target.closest('[data-trade]');
-  if(!btn)return;
-  ev.preventDefault();
-  ev.stopPropagation();
-  const stockId=parseInt(btn.dataset.stock,10);
-  if(Number.isNaN(stockId))return;
-  if(btn.dataset.trade==='buy')buyAlloc(stockId);
-  else sellAlloc(stockId);
-});
+function pointerToWheel(ev){const rect=AC.getBoundingClientRect();return{x:(ev.clientX-rect.left)*(AC.width/rect.width),y:(ev.clientY-rect.top)*(AC.height/rect.height)}}
+function wheelDown(ev){
+  if(phase!=='setup')return;const inv=currentSetupInvestor();if(!inv||!isManual(inv))return;
+  const p=pointerToWheel(ev),cx=AC.width/2,cy=AC.height/2,dx=p.x-cx,dy=p.y-cy,r=Math.hypot(dx,dy),cashR=34;
+  if(r<cashR+10){wheelDrag={type:'cash',index:6};updateWheelFromPoint(p);return}
+  const angle=Math.atan2(dy,dx);let best=-1,bestDiff=99;
+  for(let i=0;i<6;i++){const a=-Math.PI/2+i*(Math.PI*2/6);let diff=Math.abs(Math.atan2(Math.sin(angle-a),Math.cos(angle-a)));if(diff<bestDiff){bestDiff=diff;best=i}}
+  if(bestDiff<0.55){wheelDrag={type:'spoke',index:best};updateWheelFromPoint(p)}
+}
+function updateWheelFromPoint(p){
+  const inv=currentSetupInvestor();if(!inv||!isManual(inv))return;
+  const cx=AC.width/2,cy=AC.height/2,outer=108,cashR=34;
+  let weights=manualWeights(inv);
+  let assets=weights.slice(0,6);
+  if(wheelDrag.type==='cash'){
+    const r=Math.hypot(p.x-cx,p.y-cy);
+    const cashTarget=clamp(1-((r-cashR)/(outer-cashR)),0,1);
+    const assetSum=assets.reduce((s,v)=>s+v,0);
+    const desiredAssetSum=1-cashTarget;
+    if(assetSum>0){
+      const scale=desiredAssetSum/assetSum;
+      assets=assets.map(v=>clamp(v*scale,0,1));
+    }
+  } else if(wheelDrag.type==='spoke'){
+    const idx=wheelDrag.index;
+    const angle=-Math.PI/2+idx*(Math.PI*2/6);
+    const proj=((p.x-cx)*Math.cos(angle)+(p.y-cy)*Math.sin(angle));
+    const desired=clamp((proj-cashR)/(outer-cashR),0,1);
+    const otherSum=assets.reduce((s,v,i)=>s+(i===idx?0:v),0);
+    assets[idx]=Math.min(desired,Math.max(0,1-otherSum));
+  }
+  const assetSum=assets.reduce((s,v)=>s+v,0);
+  const cash=clamp(1-assetSum,0,1);
+  inv.draftRaw=[...assets,cash];
+  drawAllocationWheel();renderPortfolioPanels();renderCards();updateUI();
+}
+function wheelMove(ev){if(!wheelDrag.type)return;updateWheelFromPoint(pointerToWheel(ev))}
+function wheelUp(){wheelDrag={type:null,index:-1}}
+AC.addEventListener('pointerdown',wheelDown);window.addEventListener('pointermove',wheelMove);window.addEventListener('pointerup',wheelUp);
 
-const snips=['buy leaders sell panic','wins anchor valuation','food bias lowers volatility','poison spikes momentum','rotate on live rank drift','AI hunts underpriced frontrunners','pause and rebalance anytime','mean reversion caps mania','hot-seat lets two humans duel','market reads the brain'];
-setInterval(()=>{document.getElementById('ticker').textContent=Array.from({length:12},()=>snips[Math.floor(Math.random()*snips.length)]).join('  ·  ')},2800);
-setTradeStep(0.05);
+const snips=['lock the round live the thesis','momentum chases heat','contrarian buys discounted strength','philosopher trusts durable types','alliance readers follow trust loops','cash stoics hold dry powder','manual wheel shapes posture','first to 5000★ wins','double the rival ends the duel','allocations freeze for 1000 ticks'];
+setInterval(()=>{document.getElementById('ticker').textContent=Array.from({length:10},()=>snips[Math.floor(Math.random()*snips.length)]).join('  ·  ')},2800);
 setMode('ai');
-syncAudioUI();
 </script>
 </body>
 </html>
