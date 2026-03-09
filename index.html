@@ -699,10 +699,20 @@ function syncPauseUI(){document.getElementById('pause-btn').textContent=paused?'
 function toggleRun(){if(phase!=='run')return;paused=!paused;syncPauseUI()}
 function setSpd(v){speed=v;document.querySelectorAll('#speed-ctrl button').forEach(b=>{const m={'1x':50,'2x':25,'5x':8,'MAX':1};if(m[b.textContent]!==undefined)b.classList.toggle('sel',m[b.textContent]===v)})}
 
+/* SURGICAL FIX 1: switching to MANUAL inherits currently displayed weights */
 function strategySelectable(invId,strategyId){
   const inv=investors[invId];
+  const prevStrategy=inv.strategyId;
+  const carry=(phase==='setup' ? displayWeightsFor(inv,invId) : currentPortfolioWeights(inv)).slice();
+
   inv.strategyId=strategyId;
-  if(strategyId!=='manual')inv.draftRaw=defaultRawForStrategy(strategyId).slice();
+
+  if(strategyId==='manual'){
+    if(prevStrategy!=='manual') inv.draftRaw=carry.slice();
+  } else {
+    inv.draftRaw=defaultRawForStrategy(strategyId).slice();
+  }
+
   inv.prepared=false;
   if(phase==='setup')renderAllPanels();
 }
@@ -985,15 +995,62 @@ function renderBrainList(){const ranking=liveRankings().slice(0,4);document.getE
 function renderTxLog(){
   document.getElementById('tx-log').innerHTML=roundLog.slice(-12).reverse().map(t=>{const inv=investors[t.who];const top=t.weights.slice(0,6).map((w,i)=>({i,w})).sort((a,b)=>b.w-a.w)[0];return `<div class="tx-row"><span style="color:${inv.color}">${inv.name}</span><span style="color:#d4b3ff">${t.strategy}</span><span>${CFG[top.i].name} ${(top.w*100).toFixed(0)}%</span><span>${t.net}★</span></div>`}).join('')||'<div style="font-size:8px;color:#5c688e">no locked rounds yet</div>';
 }
+
+/* SURGICAL FIX 2: chart no longer disappears on short / awkward history states */
 function drawPortfolioChart(){
-  PX.clearRect(0,0,PC.width,PC.height);PX.fillStyle='#07070f';PX.fillRect(0,0,PC.width,PC.height);
-  const lines=[investors[0].history,investors[1].history,market[0].hist.map((_,idx)=>marketIndexAtHistory(idx))];
-  const vals=lines.flat();if(vals.length<2)return;
+  PX.clearRect(0,0,PC.width,PC.height);
+  PX.fillStyle='#07070f';
+  PX.fillRect(0,0,PC.width,PC.height);
+
+  const youHist=(investors[0]?.history||[]).filter(Number.isFinite);
+  const rivalHist=(investors[1]?.history||[]).filter(Number.isFinite);
+  const indexHist=((market[0]?.hist||[]).map((_,idx)=>marketIndexAtHistory(idx))).filter(Number.isFinite);
+
+  const safeYou=youHist.length>=2 ? youHist : [investors[0].netWorth, investors[0].netWorth];
+  const safeRival=rivalHist.length>=2 ? rivalHist : [investors[1].netWorth, investors[1].netWorth];
+  const safeIndex=indexHist.length>=2 ? indexHist : [1000,1000];
+
+  const vals=[...safeYou,...safeRival,...safeIndex].filter(Number.isFinite);
+  if(!vals.length)return;
+
   const min=Math.min(...vals),max=Math.max(...vals),range=Math.max(1,max-min),pad=10;
-  for(let i=0;i<4;i++){const y=pad+i*(PC.height-pad*2)/3;PX.strokeStyle='rgba(40,40,70,.45)';PX.beginPath();PX.moveTo(0,y);PX.lineTo(PC.width,y);PX.stroke()}
-  const specs=[{arr:investors[0].history,col:investors[0].color},{arr:investors[1].history,col:investors[1].color},{arr:lines[2],col:'#6fe0a8'}];
-  specs.forEach(sp=>{if(sp.arr.length<2)return;PX.beginPath();sp.arr.forEach((v,i)=>{const x=pad+i*(PC.width-pad*2)/Math.max(1,sp.arr.length-1);const y=PC.height-pad-((v-min)/range)*(PC.height-pad*2);if(i===0)PX.moveTo(x,y);else PX.lineTo(x,y)});PX.strokeStyle=sp.col;PX.lineWidth=1.6;PX.stroke()});
-  PX.fillStyle=investors[0].color;PX.font='9px Courier New';PX.fillText(investors[0].name,8,12);PX.fillStyle=investors[1].color;PX.fillText(investors[1].name,92,12);PX.fillStyle='#6fe0a8';PX.fillText('INDEX',200,12);
+
+  for(let i=0;i<4;i++){
+    const y=pad+i*(PC.height-pad*2)/3;
+    PX.strokeStyle='rgba(40,40,70,.45)';
+    PX.beginPath();
+    PX.moveTo(0,y);
+    PX.lineTo(PC.width,y);
+    PX.stroke();
+  }
+
+  const specs=[
+    {arr:safeYou,col:investors[0].color},
+    {arr:safeRival,col:investors[1].color},
+    {arr:safeIndex,col:'#6fe0a8'}
+  ];
+
+  specs.forEach(sp=>{
+    if(!sp.arr.length)return;
+    PX.beginPath();
+    const denom=Math.max(1,sp.arr.length-1);
+    sp.arr.forEach((v,i)=>{
+      const x=pad+i*(PC.width-pad*2)/denom;
+      const y=PC.height-pad-((v-min)/range)*(PC.height-pad*2);
+      if(i===0)PX.moveTo(x,y);else PX.lineTo(x,y);
+    });
+    PX.strokeStyle=sp.col;
+    PX.lineWidth=1.6;
+    PX.stroke();
+  });
+
+  PX.fillStyle=investors[0].color;
+  PX.font='9px Courier New';
+  PX.fillText(investors[0].name,8,12);
+  PX.fillStyle=investors[1].color;
+  PX.fillText(investors[1].name,92,12);
+  PX.fillStyle='#6fe0a8';
+  PX.fillText('INDEX',200,12);
 }
 
 function drawAllocationWheel(){
@@ -1098,6 +1155,8 @@ function wheelDown(ev){
   for(let i=0;i<6;i++){const a=-Math.PI/2+i*(Math.PI*2/6);let diff=Math.abs(Math.atan2(Math.sin(angle-a),Math.cos(angle-a)));if(diff<bestDiff){bestDiff=diff;best=i}}
   if(bestDiff<0.55){wheelDrag={type:'spoke',index:best};updateWheelFromPoint(p)}
 }
+
+/* SURGICAL FIX 3: redraw chart while dragging wheel */
 function updateWheelFromPoint(p){
   const inv=currentSetupInvestor();if(!inv||!isManual(inv))return;
   const cx=AC.width/2,cy=AC.height/2,outer=108,cashR=34;
@@ -1123,7 +1182,11 @@ function updateWheelFromPoint(p){
   const assetSum=assets.reduce((s,v)=>s+v,0);
   const cash=clamp(1-assetSum,0,1);
   inv.draftRaw=[...assets,cash];
-  drawAllocationWheel();renderPortfolioPanels();renderCards();updateUI();
+  drawAllocationWheel();
+  drawPortfolioChart();
+  renderPortfolioPanels();
+  renderCards();
+  updateUI();
 }
 function wheelMove(ev){if(!wheelDrag.type)return;updateWheelFromPoint(pointerToWheel(ev))}
 function wheelUp(){wheelDrag={type:null,index:-1}}
